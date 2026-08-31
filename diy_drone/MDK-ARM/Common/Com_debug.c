@@ -1,0 +1,9 @@
+#include "Com_debug.h"
+
+// 重写fputc函数
+int fputc(int ch, FILE *f)
+{
+    // 通过串口2发送数据
+    HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 1000);
+    return ch;
+}

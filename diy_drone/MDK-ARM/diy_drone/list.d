@@ -1,0 +1,12 @@
+diy_drone\list.o: FreeRTOS\list.c
+diy_drone\list.o: D:\Software\Keil\MDK-ARM\v5\ARM\ARMCC\Bin\..\include\stdlib.h
+diy_drone\list.o: ./FreeRTOS/include/FreeRTOS.h
+diy_drone\list.o: D:\Software\Keil\MDK-ARM\v5\ARM\ARMCC\Bin\..\include\stddef.h
+diy_drone\list.o: D:\Software\Keil\MDK-ARM\v5\ARM\ARMCC\Bin\..\include\stdint.h
+diy_drone\list.o: ./FreeRTOS/FreeRTOSConfig.h
+diy_drone\list.o: ./FreeRTOS/include/projdefs.h
+diy_drone\list.o: ./FreeRTOS/include/portable.h
+diy_drone\list.o: ./FreeRTOS/include/deprecated_definitions.h
+diy_drone\list.o: ./FreeRTOS/portable/portmacro.h
+diy_drone\list.o: ./FreeRTOS/include/mpu_wrappers.h
+diy_drone\list.o: ./FreeRTOS/include/list.h

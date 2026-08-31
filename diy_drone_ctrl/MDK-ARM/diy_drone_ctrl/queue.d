@@ -1,0 +1,15 @@
+.\diy_drone_ctrl\queue.o: FreeRTOS\queue.c
+.\diy_drone_ctrl\queue.o: D:\Software\Keil\MDK-ARM\v5\ARM\ARMCC\Bin\..\include\stdlib.h
+.\diy_drone_ctrl\queue.o: D:\Software\Keil\MDK-ARM\v5\ARM\ARMCC\Bin\..\include\string.h
+.\diy_drone_ctrl\queue.o: ./FreeRTOS/include/FreeRTOS.h
+.\diy_drone_ctrl\queue.o: D:\Software\Keil\MDK-ARM\v5\ARM\ARMCC\Bin\..\include\stddef.h
+.\diy_drone_ctrl\queue.o: D:\Software\Keil\MDK-ARM\v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\diy_drone_ctrl\queue.o: ./FreeRTOS/FreeRTOSConfig.h
+.\diy_drone_ctrl\queue.o: ./FreeRTOS/include/projdefs.h
+.\diy_drone_ctrl\queue.o: ./FreeRTOS/include/portable.h
+.\diy_drone_ctrl\queue.o: ./FreeRTOS/include/deprecated_definitions.h
+.\diy_drone_ctrl\queue.o: ./FreeRTOS/portable/portmacro.h
+.\diy_drone_ctrl\queue.o: ./FreeRTOS/include/mpu_wrappers.h
+.\diy_drone_ctrl\queue.o: ./FreeRTOS/include/task.h
+.\diy_drone_ctrl\queue.o: ./FreeRTOS/include/list.h
+.\diy_drone_ctrl\queue.o: ./FreeRTOS/include/queue.h

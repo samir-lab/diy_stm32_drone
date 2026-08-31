@@ -1,0 +1,15 @@
+.\diy_drone_ctrl\event_groups.o: FreeRTOS\event_groups.c
+.\diy_drone_ctrl\event_groups.o: D:\Software\Keil\MDK-ARM\v5\ARM\ARMCC\Bin\..\include\stdlib.h
+.\diy_drone_ctrl\event_groups.o: ./FreeRTOS/include/FreeRTOS.h
+.\diy_drone_ctrl\event_groups.o: D:\Software\Keil\MDK-ARM\v5\ARM\ARMCC\Bin\..\include\stddef.h
+.\diy_drone_ctrl\event_groups.o: D:\Software\Keil\MDK-ARM\v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\diy_drone_ctrl\event_groups.o: ./FreeRTOS/FreeRTOSConfig.h
+.\diy_drone_ctrl\event_groups.o: ./FreeRTOS/include/projdefs.h
+.\diy_drone_ctrl\event_groups.o: ./FreeRTOS/include/portable.h
+.\diy_drone_ctrl\event_groups.o: ./FreeRTOS/include/deprecated_definitions.h
+.\diy_drone_ctrl\event_groups.o: ./FreeRTOS/portable/portmacro.h
+.\diy_drone_ctrl\event_groups.o: ./FreeRTOS/include/mpu_wrappers.h
+.\diy_drone_ctrl\event_groups.o: ./FreeRTOS/include/task.h
+.\diy_drone_ctrl\event_groups.o: ./FreeRTOS/include/list.h
+.\diy_drone_ctrl\event_groups.o: ./FreeRTOS/include/timers.h
+.\diy_drone_ctrl\event_groups.o: ./FreeRTOS/include/event_groups.h
