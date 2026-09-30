@@ -97,6 +97,8 @@ int main(void)
   MX_TIM4_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
+  // 欢迎我们的朋友Samir
+	debug_printf("Hello Samir!\r\n");
   // 初始化SI24R1无线模块
   Int_SI24R1_Init();  
   // 启动FreeRTOS操作系统

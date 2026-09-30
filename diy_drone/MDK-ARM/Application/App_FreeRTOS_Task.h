@@ -8,6 +8,7 @@
 #include "Int_IP5305T.h"
 #include "Int_Motor.h"
 #include "Int_LED.h"
+#include "Int_SI24R1.h"
 
 /**
  * @brief 启动FreeRTOS操作系统

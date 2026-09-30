@@ -9,7 +9,7 @@
 // 添加日志打印开关
 #define DEBUG_PRINTF_ON 1
 
-#if DEBUG_PRINTF_ON
+#if DEBUG_PRINTF_ON == 1
 // 只打印文件名
 #define __FILE_NAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 // 添加文件名和行号
