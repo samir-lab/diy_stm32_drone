@@ -41,6 +41,15 @@ void App_Transmit_Data(void)
     comm_tx_buff[16] = (checksum >> 8) & 0xFF;
     comm_tx_buff[17] = checksum & 0xFF;
 
+    // debug_printf("TX: %d,%d,%d,%d,%d,%d,%d\n", 
+    //     mixed_ctrl_data.throttle, 
+    //     mixed_ctrl_data.yaw, 
+    //     mixed_ctrl_data.pitch, 
+    //     mixed_ctrl_data.roll,
+    //     mixed_ctrl_data.shutdown,
+    //     mixed_ctrl_data.fixed_height,
+    //     mixed_ctrl_data.fixed_position);
+
     Int_SI24R1_TxPacket(comm_tx_buff);
     // 3. 恢复RX模式
     Int_SI24R1_RX_Mode();

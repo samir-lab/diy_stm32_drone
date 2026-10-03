@@ -58,8 +58,6 @@ void App_Key_Data_Process(void)
         // 没有按键按下，继续等待
         return;
     }
-    // 打印调试信息
-    debug_printf("press key: %d\r\n", key);
     // 处理按键事件
     switch(key){
         case KEY_UP:
@@ -148,11 +146,4 @@ void App_Joystick_Data_Process(void)
     mixed_ctrl_data.roll = joystick.roll;
     // 退出临界区
     taskEXIT_CRITICAL();
-
-    // 打印调试信息
-    debug_printf(":%d,%d,%d,%d\n", 
-        mixed_ctrl_data.throttle, 
-        mixed_ctrl_data.yaw, 
-        mixed_ctrl_data.pitch, 
-        mixed_ctrl_data.roll);
 }

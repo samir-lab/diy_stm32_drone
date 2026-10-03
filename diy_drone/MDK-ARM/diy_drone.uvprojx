@@ -1061,6 +1061,11 @@
               <FileType>1</FileType>
               <FilePath>.\Application\App_FreeRTOS_Task.c</FilePath>
             </File>
+            <File>
+              <FileName>App_Receive_Data.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Application\App_Receive_Data.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
