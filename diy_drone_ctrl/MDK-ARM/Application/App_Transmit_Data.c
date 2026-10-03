@@ -32,7 +32,7 @@ void App_Transmit_Data(void)
     comm_tx_buff[13] = mixed_ctrl_data.fixed_position;
     // 校验和
     uint32_t checksum = 0;
-    for(int i = 0; i < 14; i++)
+    for(uint8_t i = 0; i < 14; i++)
     {
         checksum += comm_tx_buff[i];
     }

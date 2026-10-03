@@ -13,8 +13,8 @@ uint8_t App_Receive_Data(void)
     // 1. 清空接收缓冲区
     memset(comm_rx_buffer, 0, SI24R1_TX_PLOAD_WIDTH);
     // 2. 接收数据到缓冲区
-    Int_SI24R1_RxPacket(comm_rx_buffer);
-    if(strlen((char*)comm_rx_buffer) == 0)
+    uint8_t res = Int_SI24R1_RxPacket(comm_rx_buffer);
+    if(res == 1)
     {
         return 1; // 接收失败
     }

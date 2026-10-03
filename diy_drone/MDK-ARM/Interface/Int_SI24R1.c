@@ -183,7 +183,7 @@ uint8_t Int_SI24R1_Check(void)
 	// 读取发送地址
 	Int_SI24R1_Read_Buf(SI24R1_READ_REG + SI24R1_TX_ADDR, check_tx_address, SI24R1_TX_ADR_WIDTH);
 	// 比较写入和读取的地址是否一致
-	for(int i = 0; i < SI24R1_TX_ADR_WIDTH; i++)
+	for(uint8_t i = 0; i < SI24R1_TX_ADR_WIDTH; i++)
 	{
 		if(check_tx_address[i] != SI24R1_TX_ADDRESS[i])
 		{
@@ -198,11 +198,18 @@ uint8_t Int_SI24R1_Check(void)
 void Int_SI24R1_Init(void)
 {
 	// 等待SI24R1上电稳定
-	HAL_Delay(200);
+	HAL_Delay(500);
 	// 芯片检测
+	uint8_t check_count = 0;
 	while(Int_SI24R1_Check() != 0)
 	{
+		check_count++;
 		HAL_Delay(10);
+		if(check_count >= 100)
+		{
+			debug_printf("SI24R1 Init Failed!\r\n");
+			return;
+		}
 	}
 
 	// 初始化为接收模式 => 发送数据时切换到发送模式
