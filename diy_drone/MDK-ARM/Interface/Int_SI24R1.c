@@ -148,6 +148,7 @@ uint8_t Int_SI24R1_TxPacket(uint8_t *txbuf)
 	while((state & (SI24R1_TX_DS | SI24R1_MAX_RT)) == 0)
 	{
 		state = Int_SI24R1_Read_Reg(SI24R1_STATUS);
+		vTaskDelay(1); // 延迟1ms，避免占用过多CPU资源
 	}
 	// 清除TX_DS或MAX_RT中断标志
 	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_STATUS, state);

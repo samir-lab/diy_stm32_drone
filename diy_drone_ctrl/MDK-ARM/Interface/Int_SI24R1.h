@@ -3,6 +3,8 @@
 
 #include "spi.h"
 #include "Com_debug.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 //SI24R1 PIN DEFINITION TODO
 // 拉低片选
@@ -15,7 +17,7 @@
 #define SI24R1_CE_HIGH  HAL_GPIO_WritePin(SI_EN_GPIO_Port, SI_EN_Pin, GPIO_PIN_SET)
 
 #define SI24R1_TX_ADR_WIDTH   5  				// 5字节宽度的发送/接收地址
-#define SI24R1_TX_PLOAD_WIDTH 32  				// 数据通道有效数据宽度
+#define SI24R1_TX_PLOAD_WIDTH 18  				// 数据通道有效数据宽度
 
 //********************************************************************************************************************//
 // SPI(SI24R1) commands

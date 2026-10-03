@@ -9,10 +9,10 @@ LED_HandleTypeDef right_bottom_led = { .port = LED3_GPIO_Port, .pin = LED3_Pin};
 LED_HandleTypeDef left_bottom_led = { .port = LED4_GPIO_Port, .pin = LED4_Pin};
 
 // 电机控制结构体对象定义
-Motor_HandleTypeDef left_top_motor = { .htim = &htim3, .channel = TIM_CHANNEL_1,  .speed = 1};
-Motor_HandleTypeDef left_bottom_motor = { .htim = &htim4, .channel = TIM_CHANNEL_4,  .speed = 1};
-Motor_HandleTypeDef right_top_motor = { .htim = &htim2, .channel = TIM_CHANNEL_2,  .speed = 1};
-Motor_HandleTypeDef right_bottom_motor = { .htim = &htim1, .channel = TIM_CHANNEL_3,  .speed = 1};
+Motor_HandleTypeDef left_top_motor = { .htim = &htim3, .channel = TIM_CHANNEL_1,  .speed = 100};
+Motor_HandleTypeDef left_bottom_motor = { .htim = &htim4, .channel = TIM_CHANNEL_4,  .speed = 100};
+Motor_HandleTypeDef right_top_motor = { .htim = &htim2, .channel = TIM_CHANNEL_2,  .speed = 100};
+Motor_HandleTypeDef right_bottom_motor = { .htim = &htim1, .channel = TIM_CHANNEL_3,  .speed = 100};
 
 
 // 当前遥控器连接状态
@@ -72,7 +72,6 @@ void motor_task(void *args)
         // 每6ms执行一次 => 电机控制任务
         vTaskDelayUntil(&last_wake_time, MOTOR_TASK_PERIOD);
     
-
         // 启动电机
         // Int_Motor_Start(&left_top_motor);
         // Int_Motor_Start(&left_bottom_motor);
@@ -157,7 +156,7 @@ void led_task(void *args)
 
 
 // 通讯任务接收数据缓冲区
-uint8_t comm_rx_buffer[SI24R1_TX_PLOAD_WIDTH] = {0};
+uint8_t comm_rx_buffer[SI24R1_TX_PLOAD_WIDTH + 1] = {0};
 void comm_task(void *args)
 {
     // 获取当前基准时间

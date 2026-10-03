@@ -20,15 +20,25 @@ void comm_task(void *args);
 TaskHandle_t comm_task_handle;
 #define COMM_TASK_PERIOD 6 // 6毫秒
 
+// 按键任务
+void key_task(void *args);
+TaskHandle_t key_task_handle;
+#define KEY_TASK_PERIOD 20 // 20毫秒
+
+// 摇杆任务
+void joystick_task(void *args);
+TaskHandle_t joystick_task_handle;
+#define JOYSTICK_TASK_PERIOD 20 // 20毫秒
+
 void App_FreeRTOS_Start(void)
 {
     // 1. 创建任务
     xTaskCreate(power_task, "power_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_HIGHEST, &power_task_handle);
-
-    // 2. 创建通讯任务
     xTaskCreate(comm_task, "comm_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_HIGH, &comm_task_handle);
+    xTaskCreate(key_task, "key_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_MEDIUM, &key_task_handle);
+    xTaskCreate(joystick_task, "joystick_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_MEDIUM, &joystick_task_handle);
 
-    // 3. 启动调度器
+    // 2. 启动调度器
     vTaskStartScheduler();
 }
 
@@ -45,8 +55,6 @@ void power_task(void *args)
 }
 
 
-// 通讯任务发送数据缓冲区
-uint8_t comm_tx_buff[SI24R1_TX_PLOAD_WIDTH] = {0}; 
 void comm_task(void *args)
 {
     // 获取当前基准时间
@@ -54,18 +62,32 @@ void comm_task(void *args)
     while(1){
         // 每6毫秒执行一次
         vTaskDelayUntil(&last_wake_time, COMM_TASK_PERIOD);
-        // 调用SI24R1接口，发送数据
-        // 1. 进入TX模式
-        Int_SI24R1_TX_Mode();
-        // 2. 发送数据
-        comm_tx_buff[0] = 'h';
-        comm_tx_buff[1] = 'e';
-        comm_tx_buff[2] = 'l';
-        comm_tx_buff[3] = 'l';
-        comm_tx_buff[4] = 'o';
-        comm_tx_buff[5] = '!';
-        Int_SI24R1_TxPacket(comm_tx_buff);
-        // 3. 恢复RX模式
-        Int_SI24R1_RX_Mode();
+        App_Transmit_Data();
+    }
+}
+
+void key_task(void *args)
+{
+    // 获取当前基准时间
+    TickType_t last_wake_time = xTaskGetTickCount();
+    while(1){
+        // 每20毫秒执行一次
+        vTaskDelayUntil(&last_wake_time, KEY_TASK_PERIOD);
+        // 处理按键数据
+        App_Key_Data_Process();
+    }
+}
+
+void joystick_task(void *args)
+{
+    // 获取当前基准时间
+    TickType_t last_wake_time = xTaskGetTickCount();
+    // 摇杆ADC初始化
+    App_Joystick_Init();
+    while(1){
+        // 每20毫秒执行一次
+        vTaskDelayUntil(&last_wake_time, JOYSTICK_TASK_PERIOD);
+        // 处理摇杆数据
+        App_Joystick_Data_Process();
     }
 }
