@@ -77,8 +77,8 @@ void Int_SI24R1_RX_Mode(void)
 	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_EN_AA, 0x01);
 	// 使能接收通道0
 	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_EN_RXADDR, 0x01);
-	// 选择射频信道69（0-125个信道）
-	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RF_CH, 69);
+	// 选择射频信道110（0-125个信道）
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RF_CH, 110);
 	// 接收通道0选择和发送通道相同的有效数据宽度
 	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RX_PW_P0, SI24R1_TX_PLOAD_WIDTH);
 	// 数据传输速率选择为1Mbps，发射功率为4dBm
@@ -105,8 +105,8 @@ void Int_SI24R1_TX_Mode(void)
 	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_EN_RXADDR, 0x01);
 	// 选择自动重发延时为250us，最大自动重发次数为10次
 	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_SETUP_RETR, 0x0a);
-	// 选择射频信道69（0-125个信道）
-	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RF_CH, 69);
+	// 选择射频信道110（0-125个信道）
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RF_CH, 110);
 	// 数据传输速率选择为1Mbps，发射功率为4dBm
 	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RF_SETUP, 0x06);
 	// CRC使能，CRC模式为16位，开机，发送模式
@@ -198,7 +198,7 @@ uint8_t Int_SI24R1_Check(void)
 void Int_SI24R1_Init(void)
 {
 	// 等待SI24R1上电稳定
-	HAL_Delay(500);
+	HAL_Delay(200);
 	// 芯片检测
 	uint8_t check_count = 0;
 	while(Int_SI24R1_Check() != 0)
