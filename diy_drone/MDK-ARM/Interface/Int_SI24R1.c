@@ -207,8 +207,8 @@ void Int_SI24R1_Init(void)
 		HAL_Delay(10);
 		if(check_count >= 100)
 		{
-			debug_printf("SI24R1 Init Failed!\r\n");
-			return;
+			debug_printf("SI24R1 Check Failed!\r\n");
+			break;
 		}
 	}
 

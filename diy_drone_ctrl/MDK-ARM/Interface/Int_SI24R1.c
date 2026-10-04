@@ -200,9 +200,16 @@ void Int_SI24R1_Init(void)
 	// 等待SI24R1上电稳定
 	HAL_Delay(200);
 	// 芯片检测
+	uint8_t check_count = 0;
 	while(Int_SI24R1_Check() != 0)
 	{
+		check_count++;
 		HAL_Delay(10);
+		if(check_count >= 100)
+		{
+			debug_printf("SI24R1 Check Failed!\r\n");
+			break;
+		}
 	}
 
 	// 初始化为接收模式 => 发送数据时切换到发送模式
