@@ -8,7 +8,9 @@
 #include "Int_IP5305T.h"
 #include "Int_Motor.h"
 #include "Int_LED.h"
+#include "Int_MPU6050.h"
 #include "App_Receive_Data.h"
+#include "App_Flight_Ctrl.h"
 
 /**
  * @brief 启动FreeRTOS操作系统

@@ -27,10 +27,10 @@ void power_task(void *args);
 TaskHandle_t power_task_handle;
 #define POWER_TASK_PERIOD 10000
 
-// 电机控制任务
-void motor_task(void *args);
-TaskHandle_t motor_task_handle;
-#define MOTOR_TASK_PERIOD 6
+// 飞行控制任务
+void flight_ctrl_task(void *args);
+TaskHandle_t flight_ctrl_task_handle;
+#define FLIGHT_CTRL_TASK_PERIOD 6
 
 // LED灯控任务
 void led_task(void *args);
@@ -40,14 +40,14 @@ TaskHandle_t led_task_handle;
 // 通讯任务
 void comm_task(void *args);
 TaskHandle_t comm_task_handle;
-#define COMM_TASK_PERIOD 2 // 2毫秒
+#define COMM_TASK_PERIOD 6 // 6毫秒
 
 void App_FreeRTOS_Start(void)
 {
     // 1. 创建任务
     xTaskCreate(power_task, "power_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_HIGHEST, &power_task_handle);
-    xTaskCreate(motor_task, "motor_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_HIGH, &motor_task_handle);
-    xTaskCreate(led_task, "led_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_LOW, &led_task_handle);
+    xTaskCreate(flight_ctrl_task, "flight_ctrl_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_HIGH, &flight_ctrl_task_handle);
+    xTaskCreate(led_task, "led_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_MEDIUM, &led_task_handle);
     xTaskCreate(comm_task, "comm_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_MEDIUM, &comm_task_handle);
 
     // 2. 启动调度器
@@ -73,14 +73,18 @@ void power_task(void *args)
     }
 }
 
-void motor_task(void *args)
+void flight_ctrl_task(void *args)
 {
     // 获取当前基准时间
     TickType_t last_wake_time = xTaskGetTickCount();
+    Int_MPU6050_Init();
     while(1){
-        // 每6ms执行一次 => 电机控制任务
-        vTaskDelayUntil(&last_wake_time, MOTOR_TASK_PERIOD);
+        // 每6ms执行一次 => 飞行控制任务
+        vTaskDelayUntil(&last_wake_time, FLIGHT_CTRL_TASK_PERIOD);
     
+        // 1.获取加速度和角速度解算后的欧拉角
+        App_Flight_Ctrl_Get_Euler_Angle();
+
         // 启动电机
         // Int_Motor_Start(&left_top_motor);
         // Int_Motor_Start(&left_bottom_motor);
@@ -99,13 +103,13 @@ void led_task(void *args)
         vTaskDelayUntil(&last_wake_time, LED_TASK_PERIOD);
         count++;
 
-        if(remote_state == REMOTE_DISCONNECTED) 
+        if(remote_state == REMOTE_DISCONNECTED || flight_state == FLIGHT_FAULT) 
         {
-            // 遥控器未连接，LED灯闪烁
-            Int_LED_Toggle(&left_top_led);
-            Int_LED_Toggle(&right_top_led);
-            Int_LED_Toggle(&right_bottom_led);
-            Int_LED_Toggle(&left_bottom_led);
+            // 未连接/故障状态，LED灯熄灭
+            Int_LED_Turn_Off(&left_top_led);
+            Int_LED_Turn_Off(&right_top_led);
+            Int_LED_Turn_Off(&right_bottom_led);
+            Int_LED_Turn_Off(&left_bottom_led);
         }
         else if(remote_state == REMOTE_CONNECTED)
         {
@@ -122,15 +126,23 @@ void led_task(void *args)
             } 
             else if(flight_state == FLIGHT_TAKEOFF)
             {
-                // 快闪 => 200ms亮，200ms灭
-                if(count % 2 == 0) {
+                // 快闪 => 100ms亮，100ms灭
+                if(count % 1 == 0) {
                     Int_LED_Toggle(&left_top_led);
                     Int_LED_Toggle(&right_top_led);
                     Int_LED_Toggle(&right_bottom_led);
                     Int_LED_Toggle(&left_bottom_led);
                 }
             } 
-            else if(flight_state == FLIGHT_FIX_HEIGHT || flight_state == FLIGHT_FIX_POSITION)
+            else if(flight_state == FLIGHT_FIX_POSITION)
+            {
+                // 常亮
+                Int_LED_Turn_On(&left_top_led);
+                Int_LED_Turn_On(&right_top_led);
+                Int_LED_Turn_On(&right_bottom_led);
+                Int_LED_Turn_On(&left_bottom_led);
+            }
+            else if(flight_state == FLIGHT_FIX_HEIGHT)
             {
                 // 中闪 => 500ms亮，500ms灭
                 if(count % 5 == 0) {
@@ -139,14 +151,6 @@ void led_task(void *args)
                     Int_LED_Toggle(&right_bottom_led);
                     Int_LED_Toggle(&left_bottom_led);
                 }
-            } 
-            else if(flight_state == FLIGHT_FAULT)
-            {
-                // 故障状态，LED灯熄灭
-                Int_LED_Turn_Off(&left_top_led);
-                Int_LED_Turn_Off(&right_top_led);
-                Int_LED_Turn_Off(&right_bottom_led);
-                Int_LED_Turn_Off(&left_bottom_led);
             }
         }
         
@@ -179,5 +183,7 @@ void comm_task(void *args)
             // 关机后不再处理数据，避免重复触发关机动作
             break;
         }
+        // 4.处理飞行状态
+        App_Check_Flight_State();
     }
 }

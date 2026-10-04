@@ -24,4 +24,9 @@ uint8_t App_Receive_Data(void);
  */
 void App_Check_Remote_State(uint8_t conn_result);
 
+/**
+ * @brief 检查飞行状态
+ */
+void App_Check_Flight_State(void);
+
 #endif // __APP_RECEIVE_DATA_H__

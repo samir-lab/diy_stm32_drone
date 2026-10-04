@@ -85,3 +85,141 @@ void App_Check_Remote_State(uint8_t conn_result)
         }
     }
 }
+
+
+/**
+ * @brief 处理解锁逻辑
+ * @return 0:解锁成功 1:解锁失败
+ */
+// 油门解锁状态
+Throttle_State throttle_state = FREE;
+uint32_t max_enter_time = 0;
+uint32_t min_enter_time = 0;
+uint8_t App_Flight_Unlock(void)
+{
+    // 1.考虑安全问题，未解锁油门应为0，解锁逻辑为：油门拉到最大持续1秒，再拉到最小持续1秒，则完成解锁
+    switch (throttle_state)
+    {
+        case FREE:
+            if(mixed_ctrl_data.throttle > 900)
+            {
+                throttle_state = MAX;
+                // 记录进入时间
+                max_enter_time = xTaskGetTickCount();
+            }
+            break;
+        case MAX:
+            if(mixed_ctrl_data.throttle < 900)
+            {
+                // 保持MAX超过1秒，则进入LEAVE_MAX状态
+                if(xTaskGetTickCount() - max_enter_time > 1000)
+                {
+                    throttle_state = LEAVE_MAX;
+                }
+                else
+                {
+                    // 否则重新解锁
+                    throttle_state = FREE;
+                }
+            }
+            break;
+        case LEAVE_MAX:
+            if(mixed_ctrl_data.throttle < 100)
+            {
+                throttle_state = MIN;
+                // 记录进入时间
+                min_enter_time = xTaskGetTickCount();
+            }
+            break;
+        case MIN:
+            // 判断是否超过1秒
+            if(xTaskGetTickCount() - min_enter_time < 1000)
+            {
+                // 还未到1秒，动了油门
+                if(mixed_ctrl_data.throttle > 100)
+                {
+                    throttle_state = FREE;
+                }
+            }
+            else
+            {
+                throttle_state = UNLOCK;
+            }
+            break;
+        case UNLOCK:
+            break;
+        default:
+            break;
+    }
+    if(throttle_state == UNLOCK)
+    {
+        return 0;
+    }
+    return 1;
+}
+
+/**
+ * @brief 检查飞行状态
+ */
+extern Flight_State flight_state;
+void App_Check_Flight_State(void)
+{
+    switch (flight_state)
+    {
+        case FLIGHT_IDLE:
+            if(App_Flight_Unlock() == 0)
+            {
+                flight_state = FLIGHT_TAKEOFF;
+                throttle_state = FREE;
+            }
+            break;
+        case FLIGHT_TAKEOFF:
+            // 进入悬停状态
+            if(mixed_ctrl_data.fixed_position == 1)
+            {
+                flight_state = FLIGHT_FIX_POSITION;
+            }
+            // 进入定高状态
+            else if(mixed_ctrl_data.fixed_height == 1)
+            {
+                flight_state = FLIGHT_FIX_HEIGHT;
+            }
+            // 故障状态
+            if(remote_state == REMOTE_DISCONNECTED)
+            {
+                flight_state = FLIGHT_FAULT;
+            }
+            break;
+        case FLIGHT_FIX_HEIGHT:
+            // 取消定高
+            if(mixed_ctrl_data.fixed_height == 0)
+            {
+                flight_state = FLIGHT_TAKEOFF;
+            }
+            // 故障状态
+            if(remote_state == REMOTE_DISCONNECTED)
+            {
+                flight_state = FLIGHT_FAULT;
+            }
+            break;
+        case FLIGHT_FIX_POSITION:
+            // 取消悬停
+            if(mixed_ctrl_data.fixed_position == 0)
+            {
+                flight_state = FLIGHT_TAKEOFF;
+            }
+            // 故障状态
+            if(remote_state == REMOTE_DISCONNECTED)
+            {
+                flight_state = FLIGHT_FAULT;
+            }
+            break;
+        case FLIGHT_FAULT:
+            // 处理故障失联
+            // TODO
+            flight_state = FLIGHT_IDLE;
+            break;
+        default:
+            break;
+    }
+}

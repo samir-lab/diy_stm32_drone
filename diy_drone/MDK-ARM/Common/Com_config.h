@@ -36,5 +36,41 @@ typedef struct {
     uint8_t fixed_position; // 悬停标志位   切换为1表示悬停，切换为0表示不悬停
 } Mixed_Ctrl_Data_Type;
 
+// 油门解锁状态
+typedef enum {
+    FREE = 0,
+    MAX,
+    LEAVE_MAX,
+    MIN,
+    UNLOCK,
+} Throttle_State;
+
+// 陀螺仪数据-角速度
+typedef struct {
+    int16_t gyro_x;
+    int16_t gyro_y;
+    int16_t gyro_z;
+} Gyro_Data_Type;
+
+// 陀螺仪数据-加速度
+typedef struct {
+    int16_t accel_x;
+    int16_t accel_y;
+    int16_t accel_z;
+} Accel_Data_Type;
+
+// 陀螺仪数据
+typedef struct {
+    Gyro_Data_Type gyro;
+    Accel_Data_Type accel;
+} Gyro_Accel_Data_Type;
+
+// 解算出的欧拉角
+typedef struct {
+    float roll;
+    float pitch;
+    float yaw;
+} Euler_Angle_Type;
+
 
 #endif // __COM_CONFIG_H__
