@@ -7,11 +7,9 @@ uint8_t comm_tx_buff[SI24R1_TX_PLOAD_WIDTH] = {0};
 void App_Transmit_Data(void)
 {
     // 调用SI24R1接口，发送数据
-    // 1. 进入TX模式
-    Int_SI24R1_TX_Mode();
-    // 2. 发送数据 => 唯一性和可靠性
-    // 2.1 帧头校验，指定发送给对应的设备，唯一性
-    // 2.2 末尾添加校验和，可靠性
+    // 1. 发送数据 => 唯一性和可靠性
+    // 1.1 帧头校验，指定发送给对应的设备，唯一性
+    // 1.2 末尾添加校验和，可靠性
 
     // 数据本身11字节，帧头设置3字节，校验和设置4字节，总共18字节
     // 帧头
@@ -51,6 +49,4 @@ void App_Transmit_Data(void)
     //     mixed_ctrl_data.fixed_position);
 
     Int_SI24R1_TxPacket(comm_tx_buff);
-    // 3. 恢复RX模式
-    Int_SI24R1_RX_Mode();
 }

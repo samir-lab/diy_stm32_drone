@@ -78,7 +78,7 @@ void Int_SI24R1_RX_Mode(void)
 	// 使能接收通道0
 	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_EN_RXADDR, 0x01);
 	// 选择射频信道110（0-125个信道）
-	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RF_CH, 110);
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RF_CH, 0x6e);
 	// 接收通道0选择和发送通道相同的有效数据宽度
 	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RX_PW_P0, SI24R1_TX_PLOAD_WIDTH);
 	// 数据传输速率选择为1Mbps，发射功率为4dBm
@@ -86,7 +86,7 @@ void Int_SI24R1_RX_Mode(void)
 	// CRC使能，CRC模式为16位，开机，接收模式
 	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_CONFIG, 0x0f);
 	// 清除所有中断标志位
-	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_STATUS, 0xff);
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_STATUS, 0x70);
 	// 拉高CE使能，进入接收模式
 	SI24R1_CE_HIGH;
 }
@@ -106,7 +106,7 @@ void Int_SI24R1_TX_Mode(void)
 	// 选择自动重发延时为250us，最大自动重发次数为10次
 	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_SETUP_RETR, 0x0a);
 	// 选择射频信道110（0-125个信道）
-	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RF_CH, 110);
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RF_CH, 0x6e);
 	// 数据传输速率选择为1Mbps，发射功率为4dBm
 	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RF_SETUP, 0x06);
 	// CRC使能，CRC模式为16位，开机，发送模式
@@ -195,10 +195,76 @@ uint8_t Int_SI24R1_Check(void)
 	return 0; 
 }
 
+void Int_SI24R1_ResetAllReg(void)
+{
+	// 1. 硬件复位时序：CE拉低，释放SPI片选
+	SI24R1_CE_LOW;
+	SPI1_CS_HIGH;
+	HAL_Delay(10); 
+	// 2. 清空TX/RX FIFO缓冲区
+	SPI1_CS_LOW;
+	SPI_RW(SI24R1_FLUSH_TX);
+	SPI1_CS_HIGH;
+	HAL_Delay(1); 
+	SPI1_CS_LOW;
+	SPI_RW(SI24R1_FLUSH_RX);
+	SPI1_CS_HIGH;
+	HAL_Delay(1); 
+	// 关闭重复发送数据包功能
+	SPI1_CS_LOW;
+	SPI_RW(SI24R1_REUSE_TX_PL);
+	SPI1_CS_HIGH;
+	HAL_Delay(1);
+	// 3. 所有寄存器恢复NRF24L01/SI24R1出厂默认值
+	// CONFIG 0x00 默认 0x08：PWR_UP=0, PRIM_RX=0, 中断全部使能
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_CONFIG, 0x08);
+	// EN_AA 0x01 默认 0x3F：所有通道自动应答开启
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_EN_AA, 0x3F);
+	// EN_RXADDR 0x02 默认 0x03：P0/P1接收通道开启
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_EN_RXADDR, 0x03);
+	// SETUP_AW 0x03 默认 0x03：5字节地址宽度
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_SETUP_AW, 0x03);
+	// SETUP_RETR 0x04 默认 0x03：自动重传间隔750us，重传3次
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_SETUP_RETR, 0x03);
+	// RF_CH 0x05 默认 0x02：信道2
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RF_CH, 0x02);
+	// RF_SETUP 0x06 默认 0x07：1Mbps，0dBm发射功率
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RF_SETUP, 0x07);
+	// STATUS 0x07：写1清除所有中断标志
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_STATUS, 0x70);
+	// OBSERVE_TX 0x08 只读，无需写
+	// RSSI 0x09 只读，无需写
+	// P0~P5接收地址寄存器（清空为0）
+	uint8_t zero_buf[5] = {0};
+	Int_SI24R1_Write_Buf(SI24R1_WRITE_REG + SI24R1_RX_ADDR_P0, zero_buf, 5);
+	Int_SI24R1_Write_Buf(SI24R1_WRITE_REG + SI24R1_RX_ADDR_P1, zero_buf, 5);
+	Int_SI24R1_Write_Buf(SI24R1_WRITE_REG + SI24R1_RX_ADDR_P2, zero_buf, 1);
+	Int_SI24R1_Write_Buf(SI24R1_WRITE_REG + SI24R1_RX_ADDR_P3, zero_buf, 1);
+	Int_SI24R1_Write_Buf(SI24R1_WRITE_REG + SI24R1_RX_ADDR_P4, zero_buf, 1);
+	Int_SI24R1_Write_Buf(SI24R1_WRITE_REG + SI24R1_RX_ADDR_P5, zero_buf, 1);
+	// TX发送地址清空
+	Int_SI24R1_Write_Buf(SI24R1_WRITE_REG + SI24R1_TX_ADDR, zero_buf, 5);
+	// 所有通道有效载荷长度清零
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RX_PW_P0, 0x00);
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RX_PW_P1, 0x00);
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RX_PW_P2, 0x00);
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RX_PW_P3, 0x00);
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RX_PW_P4, 0x00);
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RX_PW_P5, 0x00);
+	// FIFO_STATUS 只读，无需写入
+	// 4. 再次清空状态寄存器所有中断位
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_STATUS, 0x70);
+	// 5. 保持CE低电平，进入待机模式，完成全部复位
+	SI24R1_CE_LOW;
+	SPI1_CS_HIGH;
+	HAL_Delay(20);
+}
+
 void Int_SI24R1_Init(void)
 {
 	// 等待SI24R1上电稳定
 	HAL_Delay(200);
+	Int_SI24R1_ResetAllReg();
 	// 芯片检测
 	uint8_t check_count = 0;
 	while(Int_SI24R1_Check() != 0)
