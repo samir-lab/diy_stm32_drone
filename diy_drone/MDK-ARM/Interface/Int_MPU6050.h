@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include "i2c.h"
 #include "Com_config.h"
+#include "Com_debug.h"
 #include "FreeRTOS.h"
 #include "task.h"
 

@@ -8,19 +8,20 @@ LED_HandleTypeDef right_top_led = { .port = LED2_GPIO_Port, .pin = LED2_Pin};
 LED_HandleTypeDef right_bottom_led = { .port = LED3_GPIO_Port, .pin = LED3_Pin};
 LED_HandleTypeDef left_bottom_led = { .port = LED4_GPIO_Port, .pin = LED4_Pin};
 
-// 电机控制结构体对象定义
-Motor_HandleTypeDef left_top_motor = { .htim = &htim3, .channel = TIM_CHANNEL_1,  .speed = 100};
-Motor_HandleTypeDef left_bottom_motor = { .htim = &htim4, .channel = TIM_CHANNEL_4,  .speed = 100};
-Motor_HandleTypeDef right_top_motor = { .htim = &htim2, .channel = TIM_CHANNEL_2,  .speed = 100};
-Motor_HandleTypeDef right_bottom_motor = { .htim = &htim1, .channel = TIM_CHANNEL_3,  .speed = 100};
-
-
 // 当前遥控器连接状态
 Remote_State remote_state = REMOTE_DISCONNECTED;
 // 当前飞行状态
 Flight_State flight_state = FLIGHT_IDLE;
 // 遥控数据结构体
-Mixed_Ctrl_Data_Type mixed_ctrl_data = {0};
+Mixed_Ctrl_Data_Type mixed_ctrl_data = {
+    .throttle = 0, 
+    .yaw = 500, 
+    .pitch = 500, 
+    .roll = 500, 
+    .shutdown = 0,
+    .fixed_height = 0,
+    .fixed_position = 0,
+};
 
 // 电源管理任务
 void power_task(void *args);
@@ -46,9 +47,9 @@ void App_FreeRTOS_Start(void)
 {
     // 1. 创建任务
     xTaskCreate(power_task, "power_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_HIGHEST, &power_task_handle);
-    xTaskCreate(led_task, "led_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_MEDIUM, &led_task_handle);
+    xTaskCreate(flight_ctrl_task, "flight_ctrl_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_HIGH, &flight_ctrl_task_handle);
+    xTaskCreate(led_task, "led_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_HIGH, &led_task_handle);
     xTaskCreate(comm_task, "comm_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_MEDIUM, &comm_task_handle);
-    xTaskCreate(flight_ctrl_task, "flight_ctrl_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_MEDIUM, &flight_ctrl_task_handle);
 
 
     // 2. 启动调度器
@@ -78,7 +79,7 @@ void flight_ctrl_task(void *args)
 {
     // 获取当前基准时间
     TickType_t last_wake_time = xTaskGetTickCount();
-    Int_MPU6050_Init();
+    App_Flight_Ctrl_Init();
     while(1){
         // 每6ms执行一次 => 飞行控制任务
         vTaskDelayUntil(&last_wake_time, FLIGHT_CTRL_TASK_PERIOD);
@@ -89,12 +90,9 @@ void flight_ctrl_task(void *args)
         // 2.PID控制
         App_Flight_Ctrl_PID_Ctrl();
 
-        // 启动电机
-        // Int_Motor_Start(&left_top_motor);
-        // Int_Motor_Start(&left_bottom_motor);
-        // Int_Motor_Start(&right_top_motor);
-        // Int_Motor_Start(&right_bottom_motor);
-    }
+        // 3.电机控制
+        App_Flight_Ctrl_Motor_Ctrl();
+    } 
 }
 
 void led_task(void *args)

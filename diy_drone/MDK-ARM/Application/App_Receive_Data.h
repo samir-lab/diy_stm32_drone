@@ -10,7 +10,7 @@
 #define FRAME_HEADER_CHECK_3 'Q'
 
 // 最大重试次数
-#define MAX_RETRY_COUNT 10
+#define MAX_RETRY_COUNT 1000 // 6秒内都通讯失败
 
 /**
  * @brief 接收遥控器数据

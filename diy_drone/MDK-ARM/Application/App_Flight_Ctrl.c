@@ -6,6 +6,27 @@ Gyro_Accel_Data_Type gyro_accel_data;
 Euler_Angle_Type euler_angle;
 
 
+// 电机控制结构体对象定义
+Motor_HandleTypeDef left_top_motor = { .htim = &htim3, .channel = TIM_CHANNEL_1,  .speed = 0};
+Motor_HandleTypeDef left_bottom_motor = { .htim = &htim4, .channel = TIM_CHANNEL_4,  .speed = 0};
+Motor_HandleTypeDef right_top_motor = { .htim = &htim2, .channel = TIM_CHANNEL_2,  .speed = 0};
+Motor_HandleTypeDef right_bottom_motor = { .htim = &htim1, .channel = TIM_CHANNEL_3,  .speed = 0};
+
+
+/**
+ * @brief 初始化飞行控制相关的模块
+ */
+void App_Flight_Ctrl_Init(void)
+{
+    // 启动MPU6050
+	Int_MPU6050_Init();
+    // 启动电机
+    Int_Motor_Start(&left_top_motor);
+	Int_Motor_Start(&left_bottom_motor);
+	Int_Motor_Start(&right_top_motor);
+	Int_Motor_Start(&right_bottom_motor);
+}
+
 /**
  * @brief 角速度低通滤波
  */
@@ -99,13 +120,10 @@ void App_Flight_Ctrl_Get_Euler_Angle(void)
 // 遥控器数据
 extern Mixed_Ctrl_Data_Type mixed_ctrl_data;
 // 俯仰角 => 外环PID参数
-PID_Type pid_pitch_out = {.kp = 0.001, .ki = 0.00001, .kd = 0.00001};
+PID_Type pid_pitch_out = {.kp = 0, .ki = 0, .kd = 0};
 // 俯仰角 => 内环PID参数
-PID_Type pid_pitch_in = {.kp = 0.001, .ki = 0.00001, .kd = 0.00001};
+PID_Type pid_pitch_in = {.kp = 1, .ki = 0, .kd = 0};
 
-
-PID_Type pid_roll = {.kp = 0.001, .ki = 0.00001, .kd = 0.00001};
-PID_Type pid_yaw = {.kp = 0.001, .ki = 0.00001, .kd = 0.00001};
 void App_Flight_Ctrl_PID_Ctrl(void)
 {
     // PID控制算法实现
@@ -125,6 +143,48 @@ void App_Flight_Ctrl_PID_Ctrl(void)
     Com_PID_Calc_Chain(&pid_pitch_out, &pid_pitch_in);
 
     // 观察内环
-    debug_printf(": %.2f, %.2f\n", pid_pitch_in.error, pid_pitch_in.output);
+    // debug_printf(": %.2f, %.2f\n", pid_pitch_in.error, pid_pitch_in.output);
+
+}
+
+/**
+ * @brief 电机控制
+ */
+extern Flight_State flight_state;
+void App_Flight_Ctrl_Motor_Ctrl(void)
+{
+    // 1.判断飞机状态
+    switch (flight_state)
+    {
+        case FLIGHT_IDLE:
+            // 加锁状态，电机速度置为0
+            left_top_motor.speed = 0;
+			left_bottom_motor.speed = 0;
+			right_top_motor.speed = 0;
+			right_bottom_motor.speed = 0;
+            break;
+        case FLIGHT_TAKEOFF:
+            // 起飞状态
+            // 俯仰角 => 向前飞右角速度 => 正误差 => 需要一个向后的反馈，前两个电机转得快，后两个转得慢
+            left_top_motor.speed = mixed_ctrl_data.throttle + pid_pitch_in.output;
+            left_bottom_motor.speed = mixed_ctrl_data.throttle - pid_pitch_in.output;
+			right_top_motor.speed = mixed_ctrl_data.throttle + pid_pitch_in.output;
+			right_bottom_motor.speed = mixed_ctrl_data.throttle - pid_pitch_in.output;
+            break;
+        case FLIGHT_FIX_POSITION:
+            break;
+        case FLIGHT_FIX_HEIGHT:
+            break;
+        case FLIGHT_FAULT:
+            break;
+        default:
+            break;
+    }
+
+    // 2.设置电机速度, 现在转速范围
+	Int_Motor_Set_Speed(&left_top_motor);
+	Int_Motor_Set_Speed(&left_bottom_motor);
+	Int_Motor_Set_Speed(&right_top_motor);
+	Int_Motor_Set_Speed(&right_bottom_motor);
 
 }

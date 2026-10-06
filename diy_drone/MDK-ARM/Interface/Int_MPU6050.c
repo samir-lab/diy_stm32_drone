@@ -55,9 +55,9 @@ void Int_MPU6050_Calibration_Offset(void)
     uint8_t count = 0;
     do {
         Int_MPU6050_Get_Accel(&curr_accel);
-        if (abs(curr_accel.accel_x - pre_accel.accel_x) < 200 &&
-            abs(curr_accel.accel_y - pre_accel.accel_y) < 200 &&
-            abs(curr_accel.accel_z - pre_accel.accel_z) < 200) {
+        if (abs(curr_accel.accel_x - pre_accel.accel_x) < 300 &&
+            abs(curr_accel.accel_y - pre_accel.accel_y) < 300 &&
+            abs(curr_accel.accel_z - pre_accel.accel_z) < 300) {
             count++;
         } else {
             count = 0;
@@ -144,6 +144,8 @@ void Int_MPU6050_Init(void)
 
     // 11.进行零偏校准
     Int_MPU6050_Calibration_Offset();
+
+	debug_printf("MPU6050 Init OK!\r\n");
 }
 
 /**

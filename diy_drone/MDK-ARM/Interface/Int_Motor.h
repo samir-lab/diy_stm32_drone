@@ -6,7 +6,7 @@
 typedef struct {
     TIM_HandleTypeDef *htim; // 定时器句柄
     uint16_t channel;        // 定时器通道
-    uint16_t speed;          // 当前速度值 speed范围为0-1000
+    int16_t speed;          // 当前速度值 speed范围为0-1000
 } Motor_HandleTypeDef;
 
 

@@ -3,7 +3,12 @@
 void Int_Motor_Set_Speed(Motor_HandleTypeDef *motor)
 {
     // 限制速度范围在0~1000之间
-    if (motor->speed > 1000) {
+    if (motor->speed < 0) 
+    {
+        motor->speed = 0;
+    }
+    else if (motor->speed > 1000) 
+    {
         motor->speed = 1000;
     }
 
