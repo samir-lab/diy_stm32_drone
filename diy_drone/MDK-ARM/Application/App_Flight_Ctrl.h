@@ -4,6 +4,7 @@
 #include "Int_MPU6050.h"
 #include "Com_debug.h"
 #include "Com_Filter.h"
+#include "Com_IMU.h"
 
 #define LOW_PASS_WEIGHT 0.15
 

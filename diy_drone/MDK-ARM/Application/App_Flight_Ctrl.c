@@ -51,4 +51,17 @@ void App_Flight_Ctrl_Get_Euler_Angle(void)
     // 4.1.3 互补解算，结合上述两种方法进行计算
     // 4.1.4 四元数解算，较复杂，算法固定，有完整的数学理论，计算量小
     // 4.1.5 卡尔曼姿态评估，动态性能好，模型复杂，计算量大，理论复杂，参数难调
+    
+    // 互补解算
+    // Com_IMU_Calc_Pose_By_Complementary(&gyro_accel_data, &euler_angle);
+
+    // 四元数解算
+    Com_IMU_Get_Euler_Angle(&gyro_accel_data, &euler_angle, 0.006);
+
+    debug_printf(": %.2f, %.2f, %.2f\n", 
+        euler_angle.roll, 
+        euler_angle.pitch, 
+        euler_angle.yaw);
 }
+
+
