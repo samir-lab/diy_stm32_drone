@@ -86,6 +86,9 @@ void flight_ctrl_task(void *args)
         // 1.获取加速度和角速度解算后的欧拉角
         App_Flight_Ctrl_Get_Euler_Angle();
 
+        // 2.PID控制
+        App_Flight_Ctrl_PID_Ctrl();
+
         // 启动电机
         // Int_Motor_Start(&left_top_motor);
         // Int_Motor_Start(&left_bottom_motor);

@@ -170,9 +170,6 @@ void Int_MPU6050_Get_Gyro(Gyro_Data_Type *gyro_data)
     // 1 => +-500°/s => 65.5 LSB/°/s
     // 2 => +-1000°/s => 32.8 LSB/°/s
     // 3 => +-2000°/s => 16.4 LSB/°/s
-    // gyro_data->gyro_x = gyro_data->gyro_x * 131;
-    // gyro_data->gyro_y = gyro_data->gyro_y * 131;
-    // gyro_data->gyro_z = gyro_data->gyro_z * 131;
 }
 
 /**
@@ -198,9 +195,6 @@ void Int_MPU6050_Get_Accel(Accel_Data_Type *accel_data)
     // 1 => +-4g => 8192 LSB/g
     // 2 => +-8g => 4096 LSB/g
     // 3 => +-16g => 2048 LSB/g
-    // accel_data->accel_x = accel_data->accel_x * 16384;
-    // accel_data->accel_y = accel_data->accel_y * 16384;
-    // accel_data->accel_z = accel_data->accel_z * 16384;
 }
 
 /**

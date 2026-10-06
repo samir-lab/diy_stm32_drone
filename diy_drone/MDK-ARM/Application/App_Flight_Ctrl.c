@@ -2,22 +2,17 @@
 
 // MPU6050数据结构体对象
 Gyro_Accel_Data_Type gyro_accel_data;
+// 解算出的欧拉角
 Euler_Angle_Type euler_angle;
 
-/**
- * @brief 解算陀螺仪数据，获取欧拉角
- */
-// 滤波器中间缓存数据
-Gyro_Data_Type pre_gyro_data;
-Accel_Data_Type pre_accel_data;
-extern KalmanFilter_Type kf_init_param[3];
-void App_Flight_Ctrl_Get_Euler_Angle(void)
-{
-    // 实现陀螺仪数据解算算法
-    // 1. 获取陀螺仪和加速度计数据
-    Int_MPU6050_Get_Data(&gyro_accel_data);
 
-    // 2.应用低通滤波算法，处理角速度数据
+/**
+ * @brief 角速度低通滤波
+ */
+// 低通滤波器中间结果
+Gyro_Data_Type pre_gyro_data;
+void App_Gyro_Data_Filter()
+{
     // 2.1 实时性要求高，对准确性要求不高，不使用傅里叶变换
     // 2.2 output = 加权系数 * pre_output + (1 - 加权系数) * 本次测量值
     gyro_accel_data.gyro.gyro_x = Common_Filter_LowPass(gyro_accel_data.gyro.gyro_x, pre_gyro_data.gyro_x, LOW_PASS_WEIGHT);
@@ -32,9 +27,17 @@ void App_Flight_Ctrl_Get_Euler_Angle(void)
     //     gyro_accel_data.gyro.gyro_x, 
     //     gyro_accel_data.gyro.gyro_y, 
     //     gyro_accel_data.gyro.gyro_z);
+}
 
-    // 3. 应用卡尔曼滤波算法，处理加速度计数据
-    // 3.1 对波动比较大的数据，使用卡尔曼滤波算法
+
+/**
+ * @brief 加速度卡尔曼滤波
+ */
+// 卡尔曼滤波器初始化参数
+extern KalmanFilter_Type kf_init_param[3];
+void App_Accel_Data_Filter()
+{
+	// 3.1 对波动比较大的数据，使用卡尔曼滤波算法
     gyro_accel_data.accel.accel_x = Common_Filter_Kalman(&kf_init_param[0], gyro_accel_data.accel.accel_x);
     gyro_accel_data.accel.accel_y = Common_Filter_Kalman(&kf_init_param[1], gyro_accel_data.accel.accel_y);
 	gyro_accel_data.accel.accel_z = Common_Filter_Kalman(&kf_init_param[2], gyro_accel_data.accel.accel_z);
@@ -43,8 +46,13 @@ void App_Flight_Ctrl_Get_Euler_Angle(void)
     //     gyro_accel_data.accel.accel_x, 
     //     gyro_accel_data.accel.accel_y, 
     //     gyro_accel_data.accel.accel_z);
+}
 
-    // 4. 姿态解算
+/**
+ * @brief 解算欧拉角
+ */
+void App_Calc_Euler_Angle(void)
+{
     // 4.1 常用的解算方法
     // 4.1.1 角速度对时间积分（类似 θ = ω * t），缺点：长时间积分存在误差
     // 4.1.2 加速度解算（类似 θ = arctan(对边/邻边)），缺点：易受振动影响
@@ -58,10 +66,65 @@ void App_Flight_Ctrl_Get_Euler_Angle(void)
     // 四元数解算
     Com_IMU_Get_Euler_Angle(&gyro_accel_data, &euler_angle, 0.006);
 
-    debug_printf(": %.2f, %.2f, %.2f\n", 
-        euler_angle.roll, 
-        euler_angle.pitch, 
-        euler_angle.yaw);
+    // debug_printf(": %.2f, %.2f, %.2f\n", 
+    //     euler_angle.roll, 
+    //     euler_angle.pitch, 
+    //     euler_angle.yaw);
+}
+
+/**
+ * @brief 解算陀螺仪数据，获取欧拉角
+ */
+void App_Flight_Ctrl_Get_Euler_Angle(void)
+{
+    // 实现陀螺仪数据解算算法
+    // 1. 获取陀螺仪和加速度计数据
+    Int_MPU6050_Get_Data(&gyro_accel_data);
+
+    // 2. 应用低通滤波算法，处理角速度数据
+    App_Gyro_Data_Filter();
+
+    // 3. 应用卡尔曼滤波算法，处理加速度计数据
+    App_Accel_Data_Filter();
+
+    // 4. 姿态解算
+    App_Calc_Euler_Angle();
 }
 
 
+/**
+ * @brief PID控制，根据欧拉角计算出PID目标值
+ * @note PID调参是先调内环，再调外环
+ */
+// 遥控器数据
+extern Mixed_Ctrl_Data_Type mixed_ctrl_data;
+// 俯仰角 => 外环PID参数
+PID_Type pid_pitch_out = {.kp = 0.001, .ki = 0.00001, .kd = 0.00001};
+// 俯仰角 => 内环PID参数
+PID_Type pid_pitch_in = {.kp = 0.001, .ki = 0.00001, .kd = 0.00001};
+
+
+PID_Type pid_roll = {.kp = 0.001, .ki = 0.00001, .kd = 0.00001};
+PID_Type pid_yaw = {.kp = 0.001, .ki = 0.00001, .kd = 0.00001};
+void App_Flight_Ctrl_PID_Ctrl(void)
+{
+    // PID控制算法实现
+    // 1. 俯仰角
+    // 1.1 外环，需要目标角度和测量角度
+    // 数值转换 => 遥控器数值范围是0-1000，需要转换为[-500,500]，并控制俯仰角范围在[-10,10]之间
+    pid_pitch_out.target = (mixed_ctrl_data.pitch - 500) / 50.0;
+    // 外环的测量值 => 当前的俯仰角
+	pid_pitch_out.measure = euler_angle.pitch;
+
+    // 1.2 内环，需要测量角速度
+	pid_pitch_in.target = pid_pitch_out.output;
+    // 内环的测量值 => 当前的角速度
+	pid_pitch_in.measure = (gyro_accel_data.gyro.gyro_y * 2000) / 32768.0;
+
+    // 1.3 计算PID输出值
+    Com_PID_Calc_Chain(&pid_pitch_out, &pid_pitch_in);
+
+    // 观察内环
+    debug_printf(": %.2f, %.2f\n", pid_pitch_in.error, pid_pitch_in.output);
+
+}

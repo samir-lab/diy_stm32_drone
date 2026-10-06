@@ -1173,6 +1173,11 @@
               <FileType>1</FileType>
               <FilePath>.\Common\Com_IMU.c</FilePath>
             </File>
+            <File>
+              <FileName>Com_PID.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Common\Com_PID.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
