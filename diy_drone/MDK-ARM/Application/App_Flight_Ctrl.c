@@ -120,33 +120,61 @@ void App_Flight_Ctrl_Get_Euler_Angle(void)
 // 遥控器数据
 extern Mixed_Ctrl_Data_Type mixed_ctrl_data;
 // 俯仰角 => 外环PID参数
-PID_Type pid_pitch_out = {.kp = 0, .ki = 0, .kd = 0};
+PID_Type pid_pitch_out = {.kp = -7.0, .ki = 0.0, .kd = 0.0};
 // 俯仰角 => 内环PID参数
-PID_Type pid_pitch_in = {.kp = 1, .ki = 0, .kd = 0};
+PID_Type pid_pitch_in = {.kp = 3.0, .ki = 0.0, .kd = 0.5};
+
+// 横滚角 => 外环PID参数
+PID_Type pid_roll_out = {.kp = -7.0, .ki = 0.0, .kd = 0.0};
+// 横滚角 => 内环PID参数
+PID_Type pid_roll_in = {.kp = 3.0, .ki = 0.0, .kd = 0.5};
+
+// 偏航角 => 外环PID参数
+PID_Type pid_yaw_out = {.kp = -3.0, .ki = 0.0, .kd = 0.0};
+// 偏航角 => 内环PID参数
+PID_Type pid_yaw_in = {.kp = -5.0, .ki = 0.0, .kd = 0.0};
 
 void App_Flight_Ctrl_PID_Ctrl(void)
 {
     // PID控制算法实现
     // 1. 俯仰角
     // 1.1 外环，需要目标角度和测量角度
-    // 数值转换 => 遥控器数值范围是0-1000，需要转换为[-500,500]，并控制俯仰角范围在[-10,10]之间
+    // 外环的目标值 => 数值转换 => 遥控器数值范围是0-1000，需要转换为[-500,500]，并控制俯仰角范围在[-10,10]之间，单位为度°
     pid_pitch_out.target = (mixed_ctrl_data.pitch - 500) / 50.0;
     // 外环的测量值 => 当前的俯仰角
 	pid_pitch_out.measure = euler_angle.pitch;
 
     // 1.2 内环，需要测量角速度
-	pid_pitch_in.target = pid_pitch_out.output;
-    // 内环的测量值 => 当前的角速度
+    // 内环的测量值 => 当前的角速度，单位转换为度/s
 	pid_pitch_in.measure = (gyro_accel_data.gyro.gyro_y * 2000) / 32768.0;
 
     // 1.3 计算PID输出值
     Com_PID_Calc_Chain(&pid_pitch_out, &pid_pitch_in);
 
-    // 观察内环
-    // debug_printf(": %.2f, %.2f\n", pid_pitch_in.error, pid_pitch_in.output);
+    // 2.横滚角
+    // 2.1 外环，需要目标角度和测量角度
+	pid_roll_out.target = (mixed_ctrl_data.roll - 500) / 50.0;
+	pid_roll_out.measure = euler_angle.roll;
 
+    // 2.2 内环，需要测量角速度
+    // 内环的测量值 => 当前的角速度，单位转换为度/s
+	pid_roll_in.measure = (gyro_accel_data.gyro.gyro_x * 2000) / 32768.0;
+
+    // 2.3 计算PID输出值
+    Com_PID_Calc_Chain(&pid_roll_out, &pid_roll_in);
+
+    // 3.偏航角
+    // 3.1 外环，需要目标角度和测量角度
+	pid_yaw_out.target = (mixed_ctrl_data.yaw - 500) / 50.0;
+	pid_yaw_out.measure = euler_angle.yaw;
+	
+    // 3.2 内环，需要测量角速度
+    // 内环的测量值 => 当前的角速度，单位转换为度/s
+	pid_yaw_in.measure = (gyro_accel_data.gyro.gyro_z * 2000) / 32768.0;
+
+    // 3.3 计算PID输出值
+    Com_PID_Calc_Chain(&pid_yaw_out, &pid_yaw_in);
 }
-
 /**
  * @brief 电机控制
  */
@@ -165,11 +193,25 @@ void App_Flight_Ctrl_Motor_Ctrl(void)
             break;
         case FLIGHT_TAKEOFF:
             // 起飞状态
-            // 俯仰角 => 向前飞角速度 => 正误差 => 需要一个向后的反馈，前两个电机转得快，后两个转得慢
-            left_top_motor.speed = mixed_ctrl_data.throttle + pid_pitch_in.output;
-			right_top_motor.speed = mixed_ctrl_data.throttle + pid_pitch_in.output;
-            left_bottom_motor.speed = mixed_ctrl_data.throttle - pid_pitch_in.output;
-			right_bottom_motor.speed = mixed_ctrl_data.throttle - pid_pitch_in.output;
+            // 俯仰角 => 向前飞有角速度 => 正误差 =>目的是让角速度为0 => 需要一个向后的反馈，前面两个电机转得快，后面两个转得慢
+            // 横滚角 => 向右飞有角速度 => 正误差 =>目的是让角速度为0 => 需要一个向左的反馈，右边两个电机转得快，左边两个转得慢
+            // 偏航角 => 逆时针转有角速度 => 正误差 =>目的是让角速度为0 => 需要一个顺时针的反馈，左上右下电机转得快，右上左下转得慢
+            left_top_motor.speed = mixed_ctrl_data.throttle 
+                                    + pid_pitch_in.output 
+                                    - pid_roll_in.output
+                                    + Com_Tool_Limit(pid_yaw_in.output, -20, 20);
+            left_bottom_motor.speed = mixed_ctrl_data.throttle 
+                                      - pid_pitch_in.output 
+                                      - pid_roll_in.output
+                                      - Com_Tool_Limit(pid_yaw_in.output, -20, 20);
+			right_top_motor.speed = mixed_ctrl_data.throttle 
+                                      + pid_pitch_in.output 
+                                      + pid_roll_in.output
+                                      - Com_Tool_Limit(pid_yaw_in.output, -20, 20);
+			right_bottom_motor.speed = mixed_ctrl_data.throttle 
+                                        - pid_pitch_in.output 
+                                        + pid_roll_in.output
+                                        + Com_Tool_Limit(pid_yaw_in.output, -20, 20);
             break;
         case FLIGHT_FIX_POSITION:
             break;
@@ -182,6 +224,15 @@ void App_Flight_Ctrl_Motor_Ctrl(void)
     }
 
     // 2.设置电机速度, 现在转速范围
+    // 2.1 安全限制 => 当油门小于50时 => 电机速度置为0
+    if (mixed_ctrl_data.throttle < 50)
+    {
+        left_top_motor.speed = 0;
+		left_bottom_motor.speed = 0;
+		right_top_motor.speed = 0;
+		right_bottom_motor.speed = 0;
+    }
+    // 2.2 设置占空比
 	Int_Motor_Set_Speed(&left_top_motor);
 	Int_Motor_Set_Speed(&left_bottom_motor);
 	Int_Motor_Set_Speed(&right_top_motor);
