@@ -120,19 +120,21 @@ void App_Flight_Ctrl_Get_Euler_Angle(void)
 // 遥控器数据
 extern Mixed_Ctrl_Data_Type mixed_ctrl_data;
 // 俯仰角 => 外环PID参数
-PID_Type pid_pitch_out = {.kp = -7.0, .ki = 0.0, .kd = 0.0};
+PID_Type pid_pitch_out = {.kp = -3.0, .ki = 0.0, .kd = 6.0};
 // 俯仰角 => 内环PID参数
-PID_Type pid_pitch_in = {.kp = 3.0, .ki = 0.0, .kd = 0.5};
+PID_Type pid_pitch_in = {.kp = 0.5, .ki = 0.0, .kd = 9.0};
 
 // 横滚角 => 外环PID参数
-PID_Type pid_roll_out = {.kp = -7.0, .ki = 0.0, .kd = 0.0};
+PID_Type pid_roll_out = {.kp = -3.0, .ki = 0.0, .kd = 6.0};
 // 横滚角 => 内环PID参数
-PID_Type pid_roll_in = {.kp = 3.0, .ki = 0.0, .kd = 0.5};
+PID_Type pid_roll_in = {.kp = 0.5, .ki = 0.0, .kd = 9.0};
 
 // 偏航角 => 外环PID参数
-PID_Type pid_yaw_out = {.kp = -3.0, .ki = 0.0, .kd = 0.0};
+PID_Type pid_yaw_out = {.kp = -3.0, .ki = 0.0, .kd = 3.0};
 // 偏航角 => 内环PID参数
-PID_Type pid_yaw_in = {.kp = -5.0, .ki = 0.0, .kd = 0.0};
+PID_Type pid_yaw_in = {.kp = -7.0, .ki = 0.0, .kd = 3.0};
+// 偏航角 限制上下范围，减少对油门影响
+uint8_t pid_yaw_limit = 20;
 
 void App_Flight_Ctrl_PID_Ctrl(void)
 {
@@ -199,19 +201,19 @@ void App_Flight_Ctrl_Motor_Ctrl(void)
             left_top_motor.speed = mixed_ctrl_data.throttle 
                                     + pid_pitch_in.output 
                                     - pid_roll_in.output
-                                    + Com_Tool_Limit(pid_yaw_in.output, -20, 20);
+                                    + Com_Tool_Limit(pid_yaw_in.output, pid_yaw_limit * -1, pid_yaw_limit);
             left_bottom_motor.speed = mixed_ctrl_data.throttle 
                                       - pid_pitch_in.output 
                                       - pid_roll_in.output
-                                      - Com_Tool_Limit(pid_yaw_in.output, -20, 20);
+                                      - Com_Tool_Limit(pid_yaw_in.output, pid_yaw_limit * -1, pid_yaw_limit);
 			right_top_motor.speed = mixed_ctrl_data.throttle 
                                       + pid_pitch_in.output 
                                       + pid_roll_in.output
-                                      - Com_Tool_Limit(pid_yaw_in.output, -20, 20);
+                                      - Com_Tool_Limit(pid_yaw_in.output, pid_yaw_limit * -1, pid_yaw_limit);
 			right_bottom_motor.speed = mixed_ctrl_data.throttle 
                                         - pid_pitch_in.output 
                                         + pid_roll_in.output
-                                        + Com_Tool_Limit(pid_yaw_in.output, -20, 20);
+                                        + Com_Tool_Limit(pid_yaw_in.output, pid_yaw_limit * -1, pid_yaw_limit);
             break;
         case FLIGHT_FIX_POSITION:
             break;
