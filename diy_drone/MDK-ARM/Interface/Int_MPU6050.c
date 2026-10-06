@@ -42,6 +42,63 @@ void Int_MPU6050_Batch_Read_Reg(uint8_t reg, uint8_t *data, uint16_t size)
     HAL_I2C_Mem_Read(&hi2c1, MPU6050_I2C_READ_ADDRESS, reg, I2C_MEMADD_SIZE_8BIT, data, size, 1000);
 }
 
+/**
+ * @brief 校准误差偏移量（取100次的平均值）
+ */
+Gyro_Accel_Data_Type gyro_accel_offset = {0};
+void Int_MPU6050_Calibration_Offset(void)
+{
+    // 1.等待飞机停放平稳
+    // 检查前后两次加速度采样值小于200，连续检查100次
+    Accel_Data_Type curr_accel = {0};
+    Accel_Data_Type pre_accel = {0};
+    uint8_t count = 0;
+    do {
+        Int_MPU6050_Get_Accel(&curr_accel);
+        if (abs(curr_accel.accel_x - pre_accel.accel_x) < 200 &&
+            abs(curr_accel.accel_y - pre_accel.accel_y) < 200 &&
+            abs(curr_accel.accel_z - pre_accel.accel_z) < 200) {
+            count++;
+        } else {
+            count = 0;
+        }
+        pre_accel = curr_accel;
+        vTaskDelay(10);
+    } while (count < 100);
+    
+    // 2. 飞机已停稳，开始进行校准
+    Gyro_Accel_Data_Type simple_data = {0};
+    int32_t accel_x_sum = 0;
+    int32_t accel_y_sum = 0;
+    int32_t accel_z_sum = 0;
+    int32_t gyro_x_sum = 0;
+    int32_t gyro_y_sum = 0;
+    int32_t gyro_z_sum = 0;
+    for (uint8_t i = 0; i < 100; i++) {
+
+        Int_MPU6050_Get_Data(&simple_data);
+
+        accel_x_sum += (simple_data.accel.accel_x - 0);
+        accel_y_sum += (simple_data.accel.accel_y - 0);
+        // z轴加速度初始值应该为1g，即16384（量程设置的2g）
+        accel_z_sum += (simple_data.accel.accel_z - 16384);
+
+        gyro_x_sum += (simple_data.gyro.gyro_x - 0);
+        gyro_y_sum += (simple_data.gyro.gyro_y - 0);
+        gyro_z_sum += (simple_data.gyro.gyro_z - 0);
+
+        vTaskDelay(10);
+    }
+
+    // 取平均值
+    gyro_accel_offset.accel.accel_x = accel_x_sum / 100;
+    gyro_accel_offset.accel.accel_y = accel_y_sum / 100;
+    gyro_accel_offset.accel.accel_z = accel_z_sum / 100;
+
+    gyro_accel_offset.gyro.gyro_x = gyro_x_sum / 100;
+    gyro_accel_offset.gyro.gyro_y = gyro_y_sum / 100;
+    gyro_accel_offset.gyro.gyro_z = gyro_z_sum / 100;
+}
 
 /**
  * @brief 初始化MPU6050传感器
@@ -65,7 +122,7 @@ void Int_MPU6050_Init(void)
     // 4.1 加速度计量程选择（+-2g）
     Int_MPU6050_Write_Reg(0x1C, 0x00); 
     // 4.2 陀螺仪量程选择（+-250度/秒 0x00, +-2000度/秒 3<<3）
-    Int_MPU6050_Write_Reg(0x1B, 0x00); 
+    Int_MPU6050_Write_Reg(0x1B, 3<<3); 
 
     // 5. 关闭中断使能
     Int_MPU6050_Write_Reg(0x38, 0x00);
@@ -84,6 +141,9 @@ void Int_MPU6050_Init(void)
 
     // 10.使能加速度和角速度传感器
     Int_MPU6050_Write_Reg(0x6C, 0x00);
+
+    // 11.进行零偏校准
+    Int_MPU6050_Calibration_Offset();
 }
 
 /**
@@ -98,6 +158,13 @@ void Int_MPU6050_Get_Gyro(Gyro_Data_Type *gyro_data)
     gyro_data->gyro_x = (int16_t)((data[0] << 8) | data[1]);
     gyro_data->gyro_y = (int16_t)((data[2] << 8) | data[3]);
     gyro_data->gyro_z = (int16_t)((data[4] << 8) | data[5]);
+
+    // 减去零偏量
+    gyro_data->gyro_x -= gyro_accel_offset.gyro.gyro_x;
+    gyro_data->gyro_y -= gyro_accel_offset.gyro.gyro_y;
+    gyro_data->gyro_z -= gyro_accel_offset.gyro.gyro_z;
+
+
     // 根据量程选择，计算实际的角速度值
     // 0 => +-250°/s => 131 LSB/°/s
     // 1 => +-500°/s => 65.5 LSB/°/s
@@ -120,6 +187,11 @@ void Int_MPU6050_Get_Accel(Accel_Data_Type *accel_data)
     accel_data->accel_x = (int16_t)((data[0] << 8) | data[1]);
     accel_data->accel_y = (int16_t)((data[2] << 8) | data[3]);
     accel_data->accel_z = (int16_t)((data[4] << 8) | data[5]);
+
+    // 减去零偏量
+    accel_data->accel_x -= gyro_accel_offset.accel.accel_x;
+    accel_data->accel_y -= gyro_accel_offset.accel.accel_y;
+    accel_data->accel_z -= gyro_accel_offset.accel.accel_z;
 
     // 根据量程选择，计算实际的加速度值
     // 0 => +-2g => 16384 LSB/g

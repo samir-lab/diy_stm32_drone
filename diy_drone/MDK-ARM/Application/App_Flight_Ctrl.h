@@ -3,6 +3,9 @@
 
 #include "Int_MPU6050.h"
 #include "Com_debug.h"
+#include "Com_Filter.h"
+
+#define LOW_PASS_WEIGHT 0.15
 
 /**
  * @brief 解算陀螺仪数据，获取欧拉角

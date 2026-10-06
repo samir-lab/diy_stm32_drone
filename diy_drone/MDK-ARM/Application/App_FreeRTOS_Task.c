@@ -46,9 +46,10 @@ void App_FreeRTOS_Start(void)
 {
     // 1. 创建任务
     xTaskCreate(power_task, "power_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_HIGHEST, &power_task_handle);
-    xTaskCreate(flight_ctrl_task, "flight_ctrl_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_HIGH, &flight_ctrl_task_handle);
     xTaskCreate(led_task, "led_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_MEDIUM, &led_task_handle);
     xTaskCreate(comm_task, "comm_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_MEDIUM, &comm_task_handle);
+    xTaskCreate(flight_ctrl_task, "flight_ctrl_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_MEDIUM, &flight_ctrl_task_handle);
+
 
     // 2. 启动调度器
     vTaskStartScheduler();

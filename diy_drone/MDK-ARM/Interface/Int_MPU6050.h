@@ -1,8 +1,11 @@
 #ifndef __INT_MPU6050_H__
 #define __INT_MPU6050_H__
 
+#include <stdlib.h>
 #include "i2c.h"
 #include "Com_config.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 // 从设备地址
 #define MPU6050_I2C_ADDRESS 0x68

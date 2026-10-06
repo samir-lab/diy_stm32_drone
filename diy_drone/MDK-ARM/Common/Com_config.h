@@ -47,16 +47,16 @@ typedef enum {
 
 // 陀螺仪数据-角速度
 typedef struct {
-    int16_t gyro_x;
-    int16_t gyro_y;
-    int16_t gyro_z;
+    int16_t gyro_x; // 往左为负，往右为正
+    int16_t gyro_y; // 往前为正，往后为负
+    int16_t gyro_z; // 往左转为正，往右转为负
 } Gyro_Data_Type;
 
 // 陀螺仪数据-加速度
 typedef struct {
-    int16_t accel_x;
-    int16_t accel_y;
-    int16_t accel_z;
+    int16_t accel_x; // 往前为正，往后为负
+    int16_t accel_y; // 往左为正，往右为负
+    int16_t accel_z; // 往上为正，往下为负
 } Accel_Data_Type;
 
 // 陀螺仪数据

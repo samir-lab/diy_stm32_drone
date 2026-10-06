@@ -1163,6 +1163,11 @@
               <FileType>5</FileType>
               <FilePath>.\Common\Com_config.h</FilePath>
             </File>
+            <File>
+              <FileName>Com_Filter.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Common\Com_Filter.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
