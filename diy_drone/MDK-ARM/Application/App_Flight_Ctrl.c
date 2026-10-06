@@ -165,10 +165,10 @@ void App_Flight_Ctrl_Motor_Ctrl(void)
             break;
         case FLIGHT_TAKEOFF:
             // 起飞状态
-            // 俯仰角 => 向前飞右角速度 => 正误差 => 需要一个向后的反馈，前两个电机转得快，后两个转得慢
+            // 俯仰角 => 向前飞角速度 => 正误差 => 需要一个向后的反馈，前两个电机转得快，后两个转得慢
             left_top_motor.speed = mixed_ctrl_data.throttle + pid_pitch_in.output;
-            left_bottom_motor.speed = mixed_ctrl_data.throttle - pid_pitch_in.output;
 			right_top_motor.speed = mixed_ctrl_data.throttle + pid_pitch_in.output;
+            left_bottom_motor.speed = mixed_ctrl_data.throttle - pid_pitch_in.output;
 			right_bottom_motor.speed = mixed_ctrl_data.throttle - pid_pitch_in.output;
             break;
         case FLIGHT_FIX_POSITION:
