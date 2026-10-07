@@ -9,6 +9,7 @@
 #include "Com_tool.h"
 #include "Int_Motor.h"
 #include "Int_VL53L1X.h"
+#include "Int_PWM3901.h"
 
 #define LOW_PASS_WEIGHT 0.15
 

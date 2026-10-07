@@ -27,6 +27,8 @@ void App_Flight_Ctrl_Init(void)
 	Int_Motor_Start(&right_bottom_motor);
     // 初始化VL53L1X
 	Int_VL53L1X_Init();
+    // 初始化PWM3901
+    Int_PWM3901_Init();
 }
 
 /**
