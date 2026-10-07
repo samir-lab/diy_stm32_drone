@@ -8,6 +8,7 @@
 #include "Com_PID.h"
 #include "Com_tool.h"
 #include "Int_Motor.h"
+#include "Int_VL53L1X.h"
 
 #define LOW_PASS_WEIGHT 0.15
 
