@@ -18,7 +18,7 @@ void Int_VL53L1X_Init(void)
     HAL_GPIO_WritePin(VX_XSHUT_GPIO_Port, VX_XSHUT_Pin, GPIO_PIN_RESET);
     vTaskDelay(10);
     HAL_GPIO_WritePin(VX_XSHUT_GPIO_Port, VX_XSHUT_Pin, GPIO_PIN_SET);
-    vTaskDelay(50);
+    vTaskDelay(10);
 
     // 2. 读取数据，检查是否正常
     uint8_t byteData;
@@ -56,9 +56,9 @@ void Int_VL53L1X_Init(void)
     // VL53L1X_SetROI(dev, 16, 16); /* minimum ROI 4,4 */
     // VL53L1X_CalibrateOffset(dev, 140, &offset); /* may take few second to perform the offset cal*/
     // VL53L1X_CalibrateXtalk(dev, 1000, &xtalk); /* may take few second to perform the xtalk cal */
-    debug_printf("VL53L1X Init Ok!\n");
 
     VL53L1X_StartRanging(dev);   /* This function has to be called to enable the ranging */
+    debug_printf("VL53L1X Init Ok!\n");
 }
 
 /**

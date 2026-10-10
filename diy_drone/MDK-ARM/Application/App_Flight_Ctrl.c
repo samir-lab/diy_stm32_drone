@@ -124,21 +124,21 @@ void App_Flight_Ctrl_Get_Euler_Angle(void)
 // 遥控器数据
 extern Mixed_Ctrl_Data_Type mixed_ctrl_data;
 // 俯仰角 => 外环PID参数
-PID_Type pid_pitch_out = {.kp = -2.0, .ki = 0.0, .kd = 5.5};
+PID_Type pid_pitch_out = {.kp = -2.0, .ki = 0.0, .kd = 6};
 // 俯仰角 => 内环PID参数
-PID_Type pid_pitch_in = {.kp = 0.35, .ki = 0.0, .kd = 6};
+PID_Type pid_pitch_in = {.kp = 0.45, .ki = 0.0, .kd = 6};
 
 // 横滚角 => 外环PID参数
-PID_Type pid_roll_out = {.kp = -2.0, .ki = 0.0, .kd = 5.5};
+PID_Type pid_roll_out = {.kp = -2.0, .ki = 0.0, .kd = 6};
 // 横滚角 => 内环PID参数
-PID_Type pid_roll_in = {.kp = 0.35, .ki = 0.0, .kd = 6};
+PID_Type pid_roll_in = {.kp = 0.45, .ki = 0.0, .kd = 6};
 
 // 偏航角 => 外环PID参数
 PID_Type pid_yaw_out = {.kp = -3.0, .ki = 0.0, .kd = 0.0};
 // 偏航角 => 内环PID参数
 PID_Type pid_yaw_in = {.kp = -6.0, .ki = 0.0, .kd = 3.0};
 // 偏航角 限制上下范围，减少对油门影响
-uint8_t pid_yaw_limit = 2;
+uint8_t pid_yaw_limit = 3;
 
 void App_Flight_Ctrl_PID_Ctrl(void)
 {

@@ -8,11 +8,17 @@
 uint8_t Int_PWM3901_Read_Reg(uint8_t reg)
 {
     uint8_t tx[2] = { (uint8_t)(reg | 0x80), 0x00 };
-    uint8_t rx[2] = {0};
+    uint8_t rx[2] = {0, 0};
 
     PMW3901_CS_LOW;
-    HAL_SPI_TransmitReceive(&hspi2, tx, rx, 2, 1000);
+    HAL_StatusTypeDef status = HAL_SPI_TransmitReceive(&hspi2, tx, rx, 2, 1000);
     PMW3901_CS_HIGH;
+    vTaskDelay(1);
+
+    if (status != HAL_OK)
+    {
+        debug_printf("[PMW3901] SPI read fail, reg=0x%02X, status=%d\r\n", reg, status);
+    }
 
     return rx[1];
 }
@@ -29,6 +35,7 @@ void Int_PWM3901_Write_Reg(uint8_t reg, uint8_t value)
     PMW3901_CS_LOW;
     HAL_SPI_Transmit(&hspi2, tx, 2, 1000);
     PMW3901_CS_HIGH;
+    vTaskDelay(1);
 }
 
 /**
@@ -39,7 +46,7 @@ void Int_PWM3901_Reset(void)
     PMW3901_RESET_LOW;
     vTaskDelay(20);
     PMW3901_RESET_HIGH;
-    vTaskDelay(50);
+    vTaskDelay(200);
 }
 
 /**
@@ -47,23 +54,25 @@ void Int_PWM3901_Reset(void)
  */
 void Int_PWM3901_Init(void)
 {
-    // 上电稳定
+    // 片选拉高，释放 SPI 端口
+    PMW3901_CS_HIGH;
+    vTaskDelay(5);
+    // Power on reset
+    Int_PWM3901_Write_Reg(0x3A, 0x5A);
+    vTaskDelay(10);
+    Int_PWM3901_Write_Reg(0x3A, 0xA5);
     vTaskDelay(50);
-
     // reset
     Int_PWM3901_Reset();
 
     // Test the SPI communication, checking chipId and inverse chipId
-    uint8_t chipId = Int_PWM3901_Read_Reg(0x00);
+    uint8_t chipId = Int_PWM3901_Read_Reg(PMW3901_REG_PRODUCT_ID);
     if (chipId != CHIP_ID)
     {
         debug_printf("[PMW3901] Chip ID read error! chipId=0x%02X\r\n", chipId);
         return;
     }
 
-    // Power on reset
-    Int_PWM3901_Write_Reg(0x3A, 0x5A);
-    vTaskDelay(5);
 
     // Reading the motion registers one time
     Int_PWM3901_Read_Reg(0x02);

@@ -93,7 +93,7 @@ void flight_ctrl_task(void *args)
         // 3.电机控制
         App_Flight_Ctrl_Motor_Ctrl();
 
-        // uint16_t distance = Int_VL53L1X_Get_Distance();
+        uint16_t distance = Int_VL53L1X_Get_Distance();
         // debug_printf("distance: %d\r\n", distance);
     }
 }

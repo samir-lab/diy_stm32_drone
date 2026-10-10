@@ -64,5 +64,6 @@ int8_t VL53L1_RdDWord(uint16_t dev, uint16_t index, uint32_t *data) {
 }
 
 int8_t VL53L1_WaitMs(uint16_t dev, int32_t wait_ms){
+	vTaskDelay(wait_ms);
 	return 0;
 }

@@ -17,6 +17,7 @@
 
 #include "VL53L1X_api.h"
 #include <string.h>
+#include "Com_debug.h"
 
 #if 0
 uint8_t VL51L1X_NVM_CONFIGURATION[] = {
@@ -192,6 +193,7 @@ VL53L1X_ERROR VL53L1X_SensorInit(uint16_t dev)
 		if (timeout_counter >= 1000)
 		{
 			status = (uint8_t)VL53L1X_ERROR_TIMEOUT;
+			debug_printf("VL53L1X VL53L1X_CheckForDataReady timeout\n");
 			return status;
 		}
 		status = VL53L1_WaitMs(dev, 1);

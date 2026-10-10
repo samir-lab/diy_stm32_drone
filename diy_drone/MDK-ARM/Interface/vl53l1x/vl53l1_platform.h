@@ -20,6 +20,8 @@
 
 #include "vl53l1_types.h"
 #include "i2c.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 #ifdef __cplusplus
 extern "C"
