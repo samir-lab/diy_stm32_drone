@@ -11,16 +11,47 @@
 #define PMW3901_RESET_LOW         HAL_GPIO_WritePin(PMW_RST_GPIO_Port, PMW_RST_Pin, GPIO_PIN_RESET)
 #define PMW3901_RESET_HIGH        HAL_GPIO_WritePin(PMW_RST_GPIO_Port, PMW_RST_Pin, GPIO_PIN_SET)
 
-#define PMW3901_REG_PRODUCT_ID    0x00
-#define PMW3901_REG_MOTION        0x02
-#define PMW3901_REG_DELTA_X       0x03
-#define PMW3901_REG_DELTA_Y       0x04
-#define PMW3901_REG_SQUAL         0x05
-#define PMW3901_REG_SHUTTER       0x06
-#define PMW3901_REG_RAW_DATA      0x08
+/* PMW3901 Optical Flow Sensor Register Map */
+/* Refer to PixArt PMW3901MB-TXQT Datasheet */
+
+/* Product ID & Revision Registers */
+#define PW3901_PRODUCT_ID          0x00    // R - Default: 0x49
+#define PW3901_REVISION_ID         0x01    // R - Default: 0x00
+#define PW3901_INVERSE_PRODUCT_ID  0x5F    // R - Default: 0x86 (Inverse of Product_ID)
+
+/* Motion Data Registers */
+#define PW3901_MOTION              0x02    // R/W - Motion status
+#define PW3901_DELTA_X_L           0x03    // R - Lower byte of X displacement
+#define PW3901_DELTA_X_H           0x04    // R - Upper byte of X displacement
+#define PW3901_DELTA_Y_L           0x05    // R - Lower byte of Y displacement
+#define PW3901_DELTA_Y_H           0x06    // R - Upper byte of Y displacement
+
+/* Quality and Diagnostic Registers */
+#define PW3901_SQUAL               0x07    // R - Surface quality
+#define PW3901_RAW_DATA_SUM        0x08    // R - Average raw data value
+#define PW3901_MAX_RAW_DATA        0x09    // R - Maximum raw data value
+#define PW3901_MIN_RAW_DATA        0x0A    // R - Minimum raw data value
+#define PW3901_SHUTTER_LOWER       0x0B    // R - Lower byte of shutter value
+#define PW3901_SHUTTER_UPPER       0x0C    // R - Upper 5 bits of shutter value
+
+/* Special Function Registers */
+#define PW3901_OBSERVATION         0x15    // R/W - Observation register
+#define PW3901_MOTION_BURST        0x16    // R - Motion burst register
+
+/* Control Registers */
+#define PW3901_POWER_UP_RESET      0x3A    // W - Write 0x5A to reset
+#define PW3901_SHUTDOWN            0x3B    // W - Write 0xB6 to shutdown
+
+/* Raw Data Access Registers */
+#define PW3901_RAW_DATA_GRAB       0x58    // R/W - Raw data grab register
+#define PW3901_RAW_DATA_GRAB_STATUS 0x59   // R - Raw data grab status
+
+/* Performance Optimization Registers (Proprietary) */
+#define PW3901_CONFIG_GROUP_0      0x7F    // R/W - Configuration group selector 0
+// Note: Many performance registers are proprietary and accessed through 0x7F page selection
+
 
 #define CHIP_ID         0x49  // 01001001
-#define CHIP_ID_INVERSE 0xB6  // 10110110
 
 typedef struct
 {
