@@ -7,20 +7,16 @@
  */
 uint8_t Int_PWM3901_Read_Reg(uint8_t reg)
 {
-    uint8_t tx[2] = { (uint8_t)(reg | 0x80), 0x00 };
-    uint8_t rx[2] = {0, 0};
+    uint8_t tx = reg | 0x80;
+    uint8_t rx;
 
     PMW3901_CS_LOW;
-    HAL_StatusTypeDef status = HAL_SPI_TransmitReceive(&hspi2, tx, rx, 2, 1000);
+    HAL_SPI_Transmit(&hspi2, &tx, 1, 1000);
+    HAL_SPI_Receive(&hspi2, &rx, 1, 1000);
     PMW3901_CS_HIGH;
     vTaskDelay(1);
 
-    if (status != HAL_OK)
-    {
-        debug_printf("[PMW3901] SPI read fail, reg=0x%02X, status=%d\r\n", reg, status);
-    }
-
-    return rx[1];
+    return rx;
 }
 
 /**
@@ -30,7 +26,9 @@ uint8_t Int_PWM3901_Read_Reg(uint8_t reg)
  */
 void Int_PWM3901_Write_Reg(uint8_t reg, uint8_t value)
 {
-    uint8_t tx[2] = { reg, value };
+    uint8_t tx[2] = {0, 0};
+    tx[0] = reg & 0x7F; // 写操作地址（最高位清零）
+    tx[1] = value;
 
     PMW3901_CS_LOW;
     HAL_SPI_Transmit(&hspi2, tx, 2, 1000);

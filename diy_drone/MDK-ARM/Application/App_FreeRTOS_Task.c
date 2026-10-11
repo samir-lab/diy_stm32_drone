@@ -94,7 +94,10 @@ void flight_ctrl_task(void *args)
         App_Flight_Ctrl_Motor_Ctrl();
 
         uint16_t distance = Int_VL53L1X_Get_Distance();
-        // debug_printf("distance: %d\r\n", distance);
+        if(distance != 0)
+        {
+            debug_printf("distance: %d\r\n", distance);
+        }
     }
 }
 

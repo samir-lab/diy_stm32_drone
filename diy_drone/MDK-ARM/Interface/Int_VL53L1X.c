@@ -49,16 +49,16 @@ void Int_VL53L1X_Init(void)
     VL53L1X_SensorInit(dev);
     /* Optional functions to be used to change the main ranging parameters according the application requirements to get the best ranging performances */
     VL53L1X_SetDistanceMode(dev, 2); /* 1=short, 2=long */
-    VL53L1X_SetTimingBudgetInMs(dev, 20); /* in ms possible values [20, 50, 100, 200, 500] */
-    VL53L1X_SetInterMeasurementInMs(dev, 20); /* in ms, IM must be > = TB */
-    VL53L1X_SetInterruptPolarity(dev,0); //This function programs the interrupt polarity, 1 = active high (default), 0 = active low.
+    VL53L1X_SetTimingBudgetInMs(dev, 100); /* in ms possible values [20, 50, 100, 200, 500] */
+    VL53L1X_SetInterMeasurementInMs(dev, 100); /* in ms, IM must be > = TB */
+    VL53L1X_SetInterruptPolarity(dev, 0); /* force active-high; some chips remain in a low-polarity reset state and then never satisfy the old ready check */
     // VL53L1X_SetOffset(dev,20); /* offset compensation in mm */
     // VL53L1X_SetROI(dev, 16, 16); /* minimum ROI 4,4 */
     // VL53L1X_CalibrateOffset(dev, 140, &offset); /* may take few second to perform the offset cal*/
     // VL53L1X_CalibrateXtalk(dev, 1000, &xtalk); /* may take few second to perform the xtalk cal */
+    debug_printf("VL53L1X Init Ok!\n");
 
     VL53L1X_StartRanging(dev);   /* This function has to be called to enable the ranging */
-    debug_printf("VL53L1X Init Ok!\n");
 }
 
 /**
@@ -67,6 +67,23 @@ void Int_VL53L1X_Init(void)
 uint16_t Int_VL53L1X_Get_Distance(void)
 {
     uint16_t distance = 0;
+    uint8_t dataReady = 0;
+    uint16_t timeout_counter = 0;
+    while (dataReady == 0)
+    {
+        VL53L1X_CheckForDataReady(dev, &dataReady);
+        timeout_counter++;
+        if (timeout_counter >= 1000)
+        {
+            printf("No data ready for long time, please check your system\n");
+            timeout_counter = 0;
+        }
+        VL53L1_WaitMs(dev, 1);
+    }
+    dataReady = 0;
+    timeout_counter = 0;
+
     VL53L1X_GetDistance(dev, &distance);
+    VL53L1X_ClearInterrupt(dev);
     return distance;
 }
