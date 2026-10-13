@@ -14,6 +14,12 @@
 void Int_VL53L1X_Init(void);
 
 /**
+ * @brief 判断VL53L1X传感器数据是否准备好
+ * @return 1:准备好，0:未准备好
+ */
+uint8_t Int_VL53L1X_Is_Data_Ready(void);
+
+/**
  * @brief 获取VL53L1X传感器的距离值
  */
 uint16_t Int_VL53L1X_Get_Distance(void);

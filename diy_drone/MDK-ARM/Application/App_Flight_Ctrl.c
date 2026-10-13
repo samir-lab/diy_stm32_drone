@@ -5,13 +5,18 @@ Gyro_Accel_Data_Type gyro_accel_data;
 // 解算出的欧拉角
 Euler_Angle_Type euler_angle;
 
-
 // 电机控制结构体对象定义
 Motor_HandleTypeDef left_top_motor = { .htim = &htim3, .channel = TIM_CHANNEL_1,  .speed = 0};
 Motor_HandleTypeDef left_bottom_motor = { .htim = &htim4, .channel = TIM_CHANNEL_4,  .speed = 0};
 Motor_HandleTypeDef right_top_motor = { .htim = &htim2, .channel = TIM_CHANNEL_2,  .speed = 0};
 Motor_HandleTypeDef right_bottom_motor = { .htim = &htim1, .channel = TIM_CHANNEL_3,  .speed = 0};
 
+// 遥控器数据
+extern Mixed_Ctrl_Data_Type mixed_ctrl_data;
+// 飞行状态
+extern Flight_State flight_state;
+// 定高目标值
+extern uint16_t fixed_height_target;
 
 /**
  * @brief 初始化飞行控制相关的模块
@@ -121,8 +126,6 @@ void App_Flight_Ctrl_Get_Euler_Angle(void)
  * @brief PID控制，根据欧拉角计算出PID目标值
  * @note PID调参是先调内环，再调外环
  */
-// 遥控器数据
-extern Mixed_Ctrl_Data_Type mixed_ctrl_data;
 // 俯仰角 => 外环PID参数
 PID_Type pid_pitch_out = {.kp = -2.0, .ki = 0.0, .kd = 6};
 // 俯仰角 => 内环PID参数
@@ -139,8 +142,7 @@ PID_Type pid_yaw_out = {.kp = -3.0, .ki = 0.0, .kd = 0.0};
 PID_Type pid_yaw_in = {.kp = -6.0, .ki = 0.0, .kd = 3.0};
 // 偏航角 限制上下范围，减少对油门影响
 uint8_t pid_yaw_limit = 3;
-
-void App_Flight_Ctrl_PID_Ctrl(void)
+void App_Flight_Ctrl_PID_MPU6050(void)
 {
     // PID控制算法实现
     // 1. 俯仰角
@@ -181,11 +183,59 @@ void App_Flight_Ctrl_PID_Ctrl(void)
     // 3.3 计算PID输出值
     Com_PID_Calc_Chain(&pid_yaw_out, &pid_yaw_in);
 }
+
+/**
+ * @brief PID控制，根据VL53LX激光测距计算出PID目标值
+ */
+PID_Type pid_fixed_height = {.kp = -6.0, .ki = 0.0, .kd = 1.0};
+void App_Flight_Ctrl_PID_VL53LX(void)
+{
+	if(flight_state != FLIGHT_FIX_HEIGHT)
+	{
+        return;
+    }
+    uint8_t is_data_ready = Int_VL53L1X_Is_Data_Ready();
+    if (is_data_ready == 0)
+    {
+        return;
+    }
+    
+    // 1.目标值（按下按钮时的高度）测量值（实时测试到的数据）
+    uint16_t curr_distance = Int_VL53L1X_Get_Distance();
+    pid_fixed_height.target = fixed_height_target;
+	pid_fixed_height.measure = curr_distance;
+
+    Com_PID_Calc(&pid_fixed_height);
+}
+
+static void App_Flight_Balanced_Posture(void)
+{
+	// 起飞状态
+    // 俯仰角 => 向前飞有角速度 => 正误差 =>目的是让角速度为0 => 需要一个向后的反馈，前面两个电机转得快，后面两个转得慢
+    // 横滚角 => 向右飞有角速度 => 正误差 =>目的是让角速度为0 => 需要一个向左的反馈，右边两个电机转得快，左边两个转得慢
+    // 偏航角 => 逆时针转有角速度 => 正误差 =>目的是让角速度为0 => 需要一个顺时针的反馈，左上右下电机转得快，右上左下转得慢
+    left_top_motor.speed = mixed_ctrl_data.throttle 
+                            + pid_pitch_in.output 
+                            - pid_roll_in.output
+                            + Com_Tool_Limit(pid_yaw_in.output, pid_yaw_limit * -1, pid_yaw_limit);
+    left_bottom_motor.speed = mixed_ctrl_data.throttle 
+                                - pid_pitch_in.output 
+                                - pid_roll_in.output
+                                - Com_Tool_Limit(pid_yaw_in.output, pid_yaw_limit * -1, pid_yaw_limit);
+    right_top_motor.speed = mixed_ctrl_data.throttle 
+                                + pid_pitch_in.output 
+                                + pid_roll_in.output
+                                - Com_Tool_Limit(pid_yaw_in.output, pid_yaw_limit * -1, pid_yaw_limit);
+    right_bottom_motor.speed = mixed_ctrl_data.throttle 
+                                - pid_pitch_in.output 
+                                + pid_roll_in.output
+                                + Com_Tool_Limit(pid_yaw_in.output, pid_yaw_limit * -1, pid_yaw_limit);
+}
+
 /**
  * @brief 电机控制
  */
-extern Flight_State flight_state;
-void App_Flight_Ctrl_Motor_Ctrl(void)
+void App_Flight_Ctrl_Motor(void)
 {
     // 1.判断飞机状态
     switch (flight_state)
@@ -199,29 +249,17 @@ void App_Flight_Ctrl_Motor_Ctrl(void)
             break;
         case FLIGHT_TAKEOFF:
             // 起飞状态
-            // 俯仰角 => 向前飞有角速度 => 正误差 =>目的是让角速度为0 => 需要一个向后的反馈，前面两个电机转得快，后面两个转得慢
-            // 横滚角 => 向右飞有角速度 => 正误差 =>目的是让角速度为0 => 需要一个向左的反馈，右边两个电机转得快，左边两个转得慢
-            // 偏航角 => 逆时针转有角速度 => 正误差 =>目的是让角速度为0 => 需要一个顺时针的反馈，左上右下电机转得快，右上左下转得慢
-            left_top_motor.speed = mixed_ctrl_data.throttle 
-                                    + pid_pitch_in.output 
-                                    - pid_roll_in.output
-                                    + Com_Tool_Limit(pid_yaw_in.output, pid_yaw_limit * -1, pid_yaw_limit);
-            left_bottom_motor.speed = mixed_ctrl_data.throttle 
-                                      - pid_pitch_in.output 
-                                      - pid_roll_in.output
-                                      - Com_Tool_Limit(pid_yaw_in.output, pid_yaw_limit * -1, pid_yaw_limit);
-			right_top_motor.speed = mixed_ctrl_data.throttle 
-                                      + pid_pitch_in.output 
-                                      + pid_roll_in.output
-                                      - Com_Tool_Limit(pid_yaw_in.output, pid_yaw_limit * -1, pid_yaw_limit);
-			right_bottom_motor.speed = mixed_ctrl_data.throttle 
-                                        - pid_pitch_in.output 
-                                        + pid_roll_in.output
-                                        + Com_Tool_Limit(pid_yaw_in.output, pid_yaw_limit * -1, pid_yaw_limit);
+            App_Flight_Balanced_Posture();
             break;
         case FLIGHT_FIX_POSITION:
             break;
         case FLIGHT_FIX_HEIGHT:
+            // 定高状态
+            App_Flight_Balanced_Posture();
+            left_top_motor.speed += pid_fixed_height.output;
+			left_bottom_motor.speed += pid_fixed_height.output;
+			right_top_motor.speed += pid_fixed_height.output;
+			right_bottom_motor.speed += pid_fixed_height.output;
             break;
         case FLIGHT_FAULT:
             break;

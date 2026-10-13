@@ -12,6 +12,8 @@ LED_HandleTypeDef left_bottom_led = { .port = LED4_GPIO_Port, .pin = LED4_Pin};
 Remote_State remote_state = REMOTE_DISCONNECTED;
 // 当前飞行状态
 Flight_State flight_state = FLIGHT_IDLE;
+// 定高目标值
+uint16_t fixed_height_target = 0;
 // 遥控数据结构体
 Mixed_Ctrl_Data_Type mixed_ctrl_data = {
     .throttle = 0, 
@@ -87,17 +89,15 @@ void flight_ctrl_task(void *args)
         // 1.获取加速度和角速度解算后的欧拉角
         App_Flight_Ctrl_Get_Euler_Angle();
 
-        // 2.PID控制
-        App_Flight_Ctrl_PID_Ctrl();
+        // 2.陀螺仪串级PID控制
+        App_Flight_Ctrl_PID_MPU6050();
 
-        // 3.电机控制
-        App_Flight_Ctrl_Motor_Ctrl();
+        // 3.VL53LX激光测距PID控制
+        App_Flight_Ctrl_PID_VL53LX();
 
-        // uint16_t distance = Int_VL53L1X_Get_Distance();
-        // if(distance != 0)
-        // {
-        //     debug_printf("distance: %d\r\n", distance);
-        // }
+        // 5.电机控制
+        App_Flight_Ctrl_Motor();
+
     }
 }
 

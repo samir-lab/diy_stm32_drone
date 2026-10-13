@@ -162,6 +162,7 @@ uint8_t App_Flight_Unlock(void)
  * @brief 检查飞行状态
  */
 extern Flight_State flight_state;
+extern uint16_t fixed_height_target;
 void App_Check_Flight_State(void)
 {
     switch (flight_state)
@@ -182,6 +183,8 @@ void App_Check_Flight_State(void)
             // 进入定高状态
             else if(mixed_ctrl_data.fixed_height == 1)
             {
+                // 记录目标高度
+                fixed_height_target = Int_VL53L1X_Get_Distance();
                 flight_state = FLIGHT_FIX_HEIGHT;
             }
             // 故障状态

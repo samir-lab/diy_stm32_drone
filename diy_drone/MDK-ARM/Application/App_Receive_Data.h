@@ -3,6 +3,7 @@
 
 #include "Com_config.h"
 #include "Int_SI24R1.h"
+#include "Int_VL53L1X.h"
 
 // 定义帧头校验3字节
 #define FRAME_HEADER_CHECK_1 'G'

@@ -68,6 +68,7 @@ void Int_PWM3901_Init(void)
 
     // 读取ProductId验证初始化成功
     uint8_t product_id = Int_PWM3901_Read_Reg(PW3901_PRODUCT_ID);
+	debug_printf("[PMW3901] Init ProductId: 0x%02X\r\n", product_id);
     if (product_id != CHIP_ID)
     {
         debug_printf("[PMW3901] Init failed! ProductId: 0x%02X\r\n", product_id);
