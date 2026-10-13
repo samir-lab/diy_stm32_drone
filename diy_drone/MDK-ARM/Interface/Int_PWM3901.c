@@ -7,13 +7,13 @@
  */
 uint8_t Int_PWM3901_Read_Reg(uint8_t reg)
 {
-    uint8_t cmd = reg & 0x7F;  // 读操作地址（最高位清零）
-    uint8_t value = 0;
+    uint8_t tx[2] = {reg & 0x7F, 0x00};
+    uint8_t rx[2] = {0, 0};
     PMW3901_CS_LOW;
-    HAL_SPI_TransmitReceive(&hspi1, &cmd, &value, 1, 1000);
+    HAL_SPI_TransmitReceive(&hspi2, tx, rx, 2, 1000);
     PMW3901_CS_HIGH;
     vTaskDelay(1);
-    return value;
+    return rx[1];
 }
 
 /**
@@ -23,9 +23,7 @@ uint8_t Int_PWM3901_Read_Reg(uint8_t reg)
  */
 void Int_PWM3901_Write_Reg(uint8_t reg, uint8_t value)
 {
-    uint8_t tx[2] = {0, 0};
-    tx[0] = reg | 0x80; // 写操作地址（最高位写1）
-    tx[1] = value;
+    uint8_t tx[2] = {reg | 0x80, value};
 
     PMW3901_CS_LOW;
     HAL_SPI_Transmit(&hspi2, tx, 2, 1000);
@@ -50,24 +48,18 @@ void Int_PWM3901_Reset(void)
 void Int_PW3901_InitReg(void);
 void Int_PWM3901_Init(void)
 {
+	// 上电稳定
     vTaskDelay(50);
+	// 软复位
+	Int_PWM3901_Reset();
+	vTaskDelay(10);
 
-    /*PW3901软件方式复位*/
-	PMW3901_CS_HIGH;
-	vTaskDelay(1);
-	PMW3901_CS_LOW;
-	Int_PWM3901_Write_Reg(0x3A, 0x5A);
-	vTaskDelay(1);
-
-    
     // Read from registers 0x02, 0x03, 0x04, 0x05 and 0x06 one time regardless of the motion pin state
-	PMW3901_CS_LOW;
 	Int_PWM3901_Read_Reg(0x02);
     Int_PWM3901_Read_Reg(0x03);
 	Int_PWM3901_Read_Reg(0x04);
 	Int_PWM3901_Read_Reg(0x05);
 	Int_PWM3901_Read_Reg(0x06);
-	PMW3901_CS_HIGH;
 
 
     // 配置寄存器
@@ -91,8 +83,28 @@ void Int_PWM3901_Init(void)
  */
 void Int_PWM3901_Get_Data(PMW3901_Data_Type *data)
 {
-}
+    if (data == NULL)
+    {
+        return;
+    }
 
+    uint8_t motion = Int_PWM3901_Read_Reg(PW3901_MOTION);
+    uint8_t delta_x_l = Int_PWM3901_Read_Reg(PW3901_DELTA_X_L);
+    uint8_t delta_x_h = Int_PWM3901_Read_Reg(PW3901_DELTA_X_H);
+    uint8_t delta_y_l = Int_PWM3901_Read_Reg(PW3901_DELTA_Y_L);
+    uint8_t delta_y_h = Int_PWM3901_Read_Reg(PW3901_DELTA_Y_H);
+    uint8_t squal = Int_PWM3901_Read_Reg(PW3901_SQUAL);
+    uint8_t raw_data = Int_PWM3901_Read_Reg(PW3901_RAW_DATA_SUM);
+    uint8_t shutter_l = Int_PWM3901_Read_Reg(PW3901_SHUTTER_LOWER);
+    uint8_t shutter_h = Int_PWM3901_Read_Reg(PW3901_SHUTTER_UPPER);
+
+    data->motion = motion;
+    data->delta_x = (int16_t)((uint16_t)delta_x_h << 8 | delta_x_l);
+    data->delta_y = (int16_t)((uint16_t)delta_y_h << 8 | delta_y_l);
+    data->squal = squal;
+    data->raw_data = raw_data;
+    data->shutter = (uint16_t)(((uint16_t)(shutter_h & 0x1F) << 8) | shutter_l);
+}
 
 void Int_PW3901_InitReg(void)
 {
