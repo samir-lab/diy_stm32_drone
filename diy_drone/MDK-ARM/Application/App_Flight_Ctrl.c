@@ -126,6 +126,7 @@ void App_Flight_Ctrl_Get_Euler_Angle(void)
  * @brief PID控制，根据欧拉角计算出PID目标值
  * @note PID调参是先调内环，再调外环
  */
+
 // 俯仰角 => 外环PID参数
 PID_Type pid_pitch_out = {.kp = -2.0, .ki = 0.0, .kd = 6};
 // 俯仰角 => 内环PID参数
@@ -187,10 +188,10 @@ void App_Flight_Ctrl_PID_MPU6050(void)
 /**
  * @brief PID控制，根据VL53LX激光测距计算出PID目标值
  */
-PID_Type pid_fixed_height = {.kp = -6.0, .ki = 0.0, .kd = 1.0};
+PID_Type pid_fixed_height = {.kp = -0.05, .ki = 0.0, .kd = 0.8};
 void App_Flight_Ctrl_PID_VL53LX(void)
 {
-	if(flight_state != FLIGHT_FIX_HEIGHT)
+	if(flight_state != FLIGHT_FIX_HEIGHT && flight_state != FLIGHT_FIX_POSITION)
 	{
         return;
     }
@@ -200,7 +201,7 @@ void App_Flight_Ctrl_PID_VL53LX(void)
         return;
     }
     
-    // 1.目标值（按下按钮时的高度）测量值（实时测试到的数据）
+    // 目标值（按下按钮时的高度）测量值（实时测试到的数据）
     uint16_t curr_distance = Int_VL53L1X_Get_Distance();
     pid_fixed_height.target = fixed_height_target;
 	pid_fixed_height.measure = curr_distance;
@@ -208,6 +209,44 @@ void App_Flight_Ctrl_PID_VL53LX(void)
     Com_PID_Calc(&pid_fixed_height);
 }
 
+
+/**
+ * @brief PID控制，根据PMW3901光流数据计算出PID目标值
+ */
+PID_Type pid_fixed_position_x = {.kp = 0.15f, .ki = 0.0f, .kd = 0.5f};
+PID_Type pid_fixed_position_y = {.kp = 0.15f, .ki = 0.0f, .kd = 0.5f};
+PMW3901_Data_Type position_data;
+void App_Flight_Ctrl_PID_PMW3901(void)
+{
+    if (flight_state != FLIGHT_FIX_POSITION)
+	{
+        return;
+    }
+
+    // 读取光流数据，使用 delta_x / delta_y 作为位置漂移误差
+    Int_PWM3901_Get_Data(&position_data);
+
+    // 位置保持：目标值为 0，误差 = 当前漂移
+    pid_fixed_position_x.target = 0.0f;
+    pid_fixed_position_x.measure = (float)position_data.delta_x;
+    Com_PID_Calc(&pid_fixed_position_x);
+
+    pid_fixed_position_y.target = 0.0f;
+    pid_fixed_position_y.measure = (float)position_data.delta_y;
+    Com_PID_Calc(&pid_fixed_position_y);
+}
+
+static void App_Flight_Locked_Posture(void)
+{
+    left_top_motor.speed = 0;
+    left_bottom_motor.speed = 0;
+    right_top_motor.speed = 0;
+    right_bottom_motor.speed = 0;
+}
+
+/**
+ * @brief 平衡姿态控制
+ */
 static void App_Flight_Balanced_Posture(void)
 {
 	// 起飞状态
@@ -233,6 +272,31 @@ static void App_Flight_Balanced_Posture(void)
 }
 
 /**
+ * @brief 定高姿态控制
+ */
+static void App_Flight_Fixed_Height_Posture(void)
+{
+    App_Flight_Balanced_Posture();
+	left_top_motor.speed += pid_fixed_height.output;
+    left_bottom_motor.speed += pid_fixed_height.output;
+    right_top_motor.speed += pid_fixed_height.output;
+    right_bottom_motor.speed += pid_fixed_height.output;
+}
+
+/**
+ * @brief 悬停姿态控制
+ */
+static void App_Flight_Fixed_Position_Posture(void)
+{
+    App_Flight_Fixed_Height_Posture();
+	left_top_motor.speed += pid_fixed_position_x.output - pid_fixed_position_y.output;
+    left_bottom_motor.speed += pid_fixed_position_x.output + pid_fixed_position_y.output;
+    right_top_motor.speed -= pid_fixed_position_x.output + pid_fixed_position_y.output;
+    right_bottom_motor.speed -= pid_fixed_position_x.output - pid_fixed_position_y.output;
+}
+
+
+/**
  * @brief 电机控制
  */
 void App_Flight_Ctrl_Motor(void)
@@ -242,24 +306,19 @@ void App_Flight_Ctrl_Motor(void)
     {
         case FLIGHT_IDLE:
             // 加锁状态，电机速度置为0
-            left_top_motor.speed = 0;
-			left_bottom_motor.speed = 0;
-			right_top_motor.speed = 0;
-			right_bottom_motor.speed = 0;
+            App_Flight_Locked_Posture();
             break;
         case FLIGHT_TAKEOFF:
             // 起飞状态
             App_Flight_Balanced_Posture();
             break;
         case FLIGHT_FIX_POSITION:
+            // 定点悬停
+            App_Flight_Fixed_Position_Posture();
             break;
         case FLIGHT_FIX_HEIGHT:
             // 定高状态
-            App_Flight_Balanced_Posture();
-            left_top_motor.speed += pid_fixed_height.output;
-			left_bottom_motor.speed += pid_fixed_height.output;
-			right_top_motor.speed += pid_fixed_height.output;
-			right_bottom_motor.speed += pid_fixed_height.output;
+            App_Flight_Fixed_Height_Posture();
             break;
         case FLIGHT_FAULT:
             break;
@@ -268,13 +327,10 @@ void App_Flight_Ctrl_Motor(void)
     }
 
     // 2.设置电机速度, 现在转速范围
-    // 2.1 安全限制 => 当油门小于50时 => 电机速度置为0
+    // 2.1 安全限制 => 当油门小于50时 => 电机上锁，速度置为0
     if (mixed_ctrl_data.throttle < 50)
     {
-        left_top_motor.speed = 0;
-		left_bottom_motor.speed = 0;
-		right_top_motor.speed = 0;
-		right_bottom_motor.speed = 0;
+        App_Flight_Locked_Posture();
     }
     // 2.2 设置占空比
 	Int_Motor_Set_Speed(&left_top_motor);

@@ -178,6 +178,8 @@ void App_Check_Flight_State(void)
             // 进入悬停状态
             if(mixed_ctrl_data.fixed_position == 1)
             {
+                // 记录目标高度
+                fixed_height_target = Int_VL53L1X_Get_Distance();
                 flight_state = FLIGHT_FIX_POSITION;
             }
             // 进入定高状态
