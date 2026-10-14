@@ -95,6 +95,9 @@ void flight_ctrl_task(void *args)
         // 3.VL53LX激光测距PID控制
         App_Flight_Ctrl_PID_VL53LX();
 
+        // 4.PMW3901光流PID控制
+        App_Flight_Ctrl_PID_PMW3901();
+
         // 5.电机控制
         App_Flight_Ctrl_Motor();
 

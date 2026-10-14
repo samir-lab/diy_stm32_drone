@@ -33,7 +33,7 @@ void App_Flight_Ctrl_Init(void)
     // 初始化VL53L1X
 	Int_VL53L1X_Init();
     // 初始化PWM3901
-    Int_PWM3901_Init();
+    Int_PMW3901_Init();
 }
 
 /**
@@ -128,21 +128,21 @@ void App_Flight_Ctrl_Get_Euler_Angle(void)
  */
 
 // 俯仰角 => 外环PID参数
-PID_Type pid_pitch_out = {.kp = -2.0, .ki = 0.0, .kd = 6};
+PID_Type pid_pitch_out = {.kp = -2.0, .ki = 0.0, .kd = 4};
 // 俯仰角 => 内环PID参数
 PID_Type pid_pitch_in = {.kp = 0.45, .ki = 0.0, .kd = 6};
 
 // 横滚角 => 外环PID参数
-PID_Type pid_roll_out = {.kp = -2.0, .ki = 0.0, .kd = 6};
+PID_Type pid_roll_out = {.kp = -2.0, .ki = 0.0, .kd = 4};
 // 横滚角 => 内环PID参数
 PID_Type pid_roll_in = {.kp = 0.45, .ki = 0.0, .kd = 6};
 
 // 偏航角 => 外环PID参数
 PID_Type pid_yaw_out = {.kp = -3.0, .ki = 0.0, .kd = 0.0};
 // 偏航角 => 内环PID参数
-PID_Type pid_yaw_in = {.kp = -6.0, .ki = 0.0, .kd = 3.0};
+PID_Type pid_yaw_in = {.kp = -5.0, .ki = 0.0, .kd = 3.0};
 // 偏航角 限制上下范围，减少对油门影响
-uint8_t pid_yaw_limit = 3;
+uint8_t pid_yaw_limit = 10;
 void App_Flight_Ctrl_PID_MPU6050(void)
 {
     // PID控制算法实现
@@ -188,7 +188,7 @@ void App_Flight_Ctrl_PID_MPU6050(void)
 /**
  * @brief PID控制，根据VL53LX激光测距计算出PID目标值
  */
-PID_Type pid_fixed_height = {.kp = -0.05, .ki = 0.0, .kd = 0.8};
+PID_Type pid_fixed_height = {.kp = -0.05, .ki = 0.0, .kd = 1};
 void App_Flight_Ctrl_PID_VL53LX(void)
 {
 	if(flight_state != FLIGHT_FIX_HEIGHT && flight_state != FLIGHT_FIX_POSITION)
@@ -213,9 +213,9 @@ void App_Flight_Ctrl_PID_VL53LX(void)
 /**
  * @brief PID控制，根据PMW3901光流数据计算出PID目标值
  */
-PID_Type pid_fixed_position_x = {.kp = 0.15f, .ki = 0.0f, .kd = 0.5f};
-PID_Type pid_fixed_position_y = {.kp = 0.15f, .ki = 0.0f, .kd = 0.5f};
-PMW3901_Data_Type position_data;
+PID_Type pid_fixed_position_x = {.kp = 0.05, .ki = 0.0, .kd = 1};
+PID_Type pid_fixed_position_y = {.kp = 0.05, .ki = 0.0, .kd = 1};
+PMW3901_Data_Type position_data = {0};
 void App_Flight_Ctrl_PID_PMW3901(void)
 {
     if (flight_state != FLIGHT_FIX_POSITION)
@@ -224,7 +224,7 @@ void App_Flight_Ctrl_PID_PMW3901(void)
     }
 
     // 读取光流数据，使用 delta_x / delta_y 作为位置漂移误差
-    Int_PWM3901_Get_Data(&position_data);
+    Int_PMW3901_Get_Data(&position_data);
 
     // 位置保持：目标值为 0，误差 = 当前漂移
     pid_fixed_position_x.target = 0.0f;
@@ -289,10 +289,10 @@ static void App_Flight_Fixed_Height_Posture(void)
 static void App_Flight_Fixed_Position_Posture(void)
 {
     App_Flight_Fixed_Height_Posture();
-	left_top_motor.speed += pid_fixed_position_x.output - pid_fixed_position_y.output;
-    left_bottom_motor.speed += pid_fixed_position_x.output + pid_fixed_position_y.output;
-    right_top_motor.speed -= pid_fixed_position_x.output + pid_fixed_position_y.output;
-    right_bottom_motor.speed -= pid_fixed_position_x.output - pid_fixed_position_y.output;
+	left_top_motor.speed = left_top_motor.speed + pid_fixed_position_x.output + pid_fixed_position_y.output;
+    left_bottom_motor.speed = left_bottom_motor.speed + pid_fixed_position_x.output - pid_fixed_position_y.output;
+    right_top_motor.speed = right_top_motor.speed - pid_fixed_position_x.output + pid_fixed_position_y.output;
+    right_bottom_motor.speed = right_bottom_motor.speed -pid_fixed_position_x.output - pid_fixed_position_y.output;
 }
 
 
