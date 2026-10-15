@@ -230,10 +230,14 @@ void App_Flight_Ctrl_PID_VL53LX(void)
  * @brief PID控制，根据PMW3901光流数据计算出PID目标值
  * @note 外环：位置环; 内环：速度环
  */
-PID_Type pid_fixed_pos_x_out = {.kp = 0.6f, .ki = 0.0f, .kd = 4.0f};
-PID_Type pid_fixed_pos_x_in = {.kp = 1.0f, .ki = 0.0f, .kd = 0.0f};
-PID_Type pid_fixed_pos_y_out = {.kp = 0.6f, .ki = 0.0f, .kd = 4.0f};
-PID_Type pid_fixed_pos_y_in = {.kp = 1.0f, .ki = 0.0f, .kd = 0.0f};
+// x轴
+PID_Type pid_fixed_pos_x_out = {.kp = -1.5, .ki = 0.0, .kd = 3.0};
+PID_Type pid_fixed_pos_x_in = {.kp = -2.5, .ki = 0.0, .kd = 5};
+float pid_fixed_pos_x = 0;
+// y轴
+PID_Type pid_fixed_pos_y_out = {.kp = -1.5, .ki = 0.0, .kd = 3.0};
+PID_Type pid_fixed_pos_y_in = {.kp = -2.5, .ki = 0.0, .kd = 5};
+float pid_fixed_pos_y = 0;
 PMW3901_Data_Type position_data = {0};
 void App_Flight_Ctrl_PID_PMW3901(void)
 {
@@ -241,6 +245,8 @@ void App_Flight_Ctrl_PID_PMW3901(void)
 	{
         pid_fixed_pos_x_in.output = 0;
         pid_fixed_pos_y_in.output = 0;
+        pid_fixed_pos_x = 0;
+        pid_fixed_pos_y = 0;
         return;
     }
 
@@ -251,23 +257,36 @@ void App_Flight_Ctrl_PID_PMW3901(void)
     {
         pid_fixed_pos_x_in.output = 0;
         pid_fixed_pos_y_in.output = 0;
+        pid_fixed_pos_x = 0;
+        pid_fixed_pos_y = 0;
 		return;
     }
 
-    // X轴：外环位置控制，目标位置为 0，误差 = 当前 x 方向漂移量
+    // X轴：外环位置控制，目标位置为 0
+    // 高度 h（单位m）
+    // 视场角 FOV（单位°，典型42°）
+    // 单像素地面尺寸 = (2 × h × tan(FOV/2)) / 35
+    // 速度(m/s) = 像素位移 × 单像素地面尺寸(m) × FPS
+    float cache_val = (fixed_height_target/1000.0f) * 0.021935 * (1/0.006f);
+    float vx =  cache_val * position_data.delta_x;
+    pid_fixed_pos_x += vx * 0.006f;
     pid_fixed_pos_x_out.target = 0.0f;
-    pid_fixed_pos_x_out.measure = (float)position_data.delta_x;
+    pid_fixed_pos_x_out.measure = pid_fixed_pos_x;
     // X轴：内环速度控制，速度目标 = 位置环输出，速度测量 = x 方向漂移速度
-    pid_fixed_pos_x_in.measure = ((fixed_height_target / 1000.0f) * position_data.delta_x) / (12 * 46 * 0.006f);
+    pid_fixed_pos_x_in.measure = vx;
     Com_PID_Calc_Chain(&pid_fixed_pos_x_out, &pid_fixed_pos_x_in);
 
     // Y轴：外环位置控制，目标位置为 0，误差 = 当前 y 方向漂移量
+    float vy = cache_val * position_data.delta_y;
+    pid_fixed_pos_y += vy * 0.006f;
     pid_fixed_pos_y_out.target = 0.0f;
-    pid_fixed_pos_y_out.measure = (float)position_data.delta_y;
+    pid_fixed_pos_y_out.measure = pid_fixed_pos_y;
     // Y轴：内环速度控制，速度目标 = 位置环输出，速度测量 = y 方向漂移速度
-    pid_fixed_pos_y_in.measure = ((fixed_height_target / 1000.0f) * position_data.delta_y) / (12 * 46 * 0.006f);
+    pid_fixed_pos_y_in.measure = vy;
     Com_PID_Calc_Chain(&pid_fixed_pos_y_out, &pid_fixed_pos_y_in);
-    
+
+
+    // debug_printf(":%.4f, %.4f, %.4f, %.4f\n", vx, pid_fixed_pos_x, vy, pid_fixed_pos_y);
     // debug_printf(":%.2f, %.2f\n", pid_fixed_pos_x_in.output, pid_fixed_pos_y_in.output);
 }
 
