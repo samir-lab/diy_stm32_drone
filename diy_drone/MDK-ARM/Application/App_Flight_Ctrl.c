@@ -228,38 +228,47 @@ void App_Flight_Ctrl_PID_VL53LX(void)
 
 /**
  * @brief PID控制，根据PMW3901光流数据计算出PID目标值
+ * @note 外环：位置环; 内环：速度环
  */
-PID_Type pid_fixed_position_x = {.kp = 0.25, .ki = 0.0, .kd = 2.5};
-PID_Type pid_fixed_position_y = {.kp = 0.25, .ki = 0.0, .kd = 2.5};
-int16_t pre_delta_x = 0;
-int16_t pre_delta_y = 0;
+PID_Type pid_fixed_pos_x_out = {.kp = 0.6f, .ki = 0.0f, .kd = 4.0f};
+PID_Type pid_fixed_pos_x_in = {.kp = 1.0f, .ki = 0.0f, .kd = 0.0f};
+PID_Type pid_fixed_pos_y_out = {.kp = 0.6f, .ki = 0.0f, .kd = 4.0f};
+PID_Type pid_fixed_pos_y_in = {.kp = 1.0f, .ki = 0.0f, .kd = 0.0f};
 PMW3901_Data_Type position_data = {0};
 void App_Flight_Ctrl_PID_PMW3901(void)
 {
     if (flight_state != FLIGHT_FIX_POSITION)
 	{
+        pid_fixed_pos_x_in.output = 0;
+        pid_fixed_pos_y_in.output = 0;
         return;
     }
 
     // 读取光流数据，使用 delta_x / delta_y 作为位置漂移误差
     Int_PMW3901_Get_Data(&position_data);
-    if(position_data.delta_x != 0){
-        position_data.delta_x = Common_Filter_LowPass(position_data.delta_x, pre_delta_x, LOW_PASS_WEIGHT);
-        pre_delta_x = position_data.delta_x;
-    }
-    if(position_data.delta_y != 0){
-        position_data.delta_y = Common_Filter_LowPass(position_data.delta_y, pre_delta_y, LOW_PASS_WEIGHT);
-        pre_delta_y = position_data.delta_y;
+
+    if(position_data.delta_x == 0 && position_data.delta_y == 0)
+    {
+        pid_fixed_pos_x_in.output = 0;
+        pid_fixed_pos_y_in.output = 0;
+		return;
     }
 
-    // 位置保持：目标值为 0，误差 = 当前漂移
-    pid_fixed_position_x.target = 0.0f;
-    pid_fixed_position_x.measure = (float)position_data.delta_x;
-    Com_PID_Calc(&pid_fixed_position_x);
+    // X轴：外环位置控制，目标位置为 0，误差 = 当前 x 方向漂移量
+    pid_fixed_pos_x_out.target = 0.0f;
+    pid_fixed_pos_x_out.measure = (float)position_data.delta_x;
+    // X轴：内环速度控制，速度目标 = 位置环输出，速度测量 = x 方向漂移速度
+    pid_fixed_pos_x_in.measure = ((fixed_height_target / 1000.0f) * position_data.delta_x) / (12 * 46 * 0.006f);
+    Com_PID_Calc_Chain(&pid_fixed_pos_x_out, &pid_fixed_pos_x_in);
 
-    pid_fixed_position_y.target = 0.0f;
-    pid_fixed_position_y.measure = (float)position_data.delta_y;
-    Com_PID_Calc(&pid_fixed_position_y);
+    // Y轴：外环位置控制，目标位置为 0，误差 = 当前 y 方向漂移量
+    pid_fixed_pos_y_out.target = 0.0f;
+    pid_fixed_pos_y_out.measure = (float)position_data.delta_y;
+    // Y轴：内环速度控制，速度目标 = 位置环输出，速度测量 = y 方向漂移速度
+    pid_fixed_pos_y_in.measure = ((fixed_height_target / 1000.0f) * position_data.delta_y) / (12 * 46 * 0.006f);
+    Com_PID_Calc_Chain(&pid_fixed_pos_y_out, &pid_fixed_pos_y_in);
+    
+    // debug_printf(":%.2f, %.2f\n", pid_fixed_pos_x_in.output, pid_fixed_pos_y_in.output);
 }
 
 
@@ -313,10 +322,10 @@ static void App_Flight_Fixed_Height_Posture(void)
 static void App_Flight_Fixed_Position_Posture(void)
 {
     App_Flight_Fixed_Height_Posture();
-	left_top_motor.speed = left_top_motor.speed + pid_fixed_position_x.output + pid_fixed_position_y.output;
-    left_bottom_motor.speed = left_bottom_motor.speed + pid_fixed_position_x.output - pid_fixed_position_y.output;
-    right_top_motor.speed = right_top_motor.speed - pid_fixed_position_x.output + pid_fixed_position_y.output;
-    right_bottom_motor.speed = right_bottom_motor.speed -pid_fixed_position_x.output - pid_fixed_position_y.output;
+	left_top_motor.speed = left_top_motor.speed + pid_fixed_pos_x_in.output + pid_fixed_pos_y_in.output;
+    left_bottom_motor.speed = left_bottom_motor.speed + pid_fixed_pos_x_in.output - pid_fixed_pos_y_in.output;
+    right_top_motor.speed = right_top_motor.speed - pid_fixed_pos_x_in.output + pid_fixed_pos_y_in.output;
+    right_bottom_motor.speed = right_bottom_motor.speed -pid_fixed_pos_x_in.output - pid_fixed_pos_y_in.output;
 }
 
 
