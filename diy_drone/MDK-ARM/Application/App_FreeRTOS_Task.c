@@ -43,7 +43,7 @@ TaskHandle_t led_task_handle;
 // 通讯任务
 void comm_task(void *args);
 TaskHandle_t comm_task_handle;
-#define COMM_TASK_PERIOD 30
+#define COMM_TASK_PERIOD 6
 
 void App_FreeRTOS_Start(void)
 {

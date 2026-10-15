@@ -41,7 +41,7 @@ void App_Flight_Ctrl_Init(void)
  */
 // 低通滤波器中间结果
 Gyro_Data_Type pre_gyro_data;
-uint8_t gyro_data_threshold = 200;
+uint16_t gyro_data_threshold = 2000;
 void App_Gyro_Data_Filter()
 {
     // 过滤非连续的大于跳跃阈值异常数据
@@ -145,19 +145,17 @@ void App_Flight_Ctrl_Get_Euler_Angle(void)
 // 俯仰角 => 外环PID参数
 PID_Type pid_pitch_out = {.kp = 0.0, .ki = 0.0, .kd = 0};
 // 俯仰角 => 内环PID参数
-PID_Type pid_pitch_in = {.kp = 0.3, .ki = 0.0, .kd = 2};
+PID_Type pid_pitch_in = {.kp = 0.8, .ki = 0.0, .kd = 15};
 
 // 横滚角 => 外环PID参数
 PID_Type pid_roll_out = {.kp = 0.0, .ki = 0.0, .kd = 0};
 // 横滚角 => 内环PID参数
-PID_Type pid_roll_in = {.kp = 0.3, .ki = 0.0, .kd = 2};
+PID_Type pid_roll_in = {.kp = 0.8, .ki = 0.0, .kd = 15};
 
 // 偏航角 => 外环PID参数
 PID_Type pid_yaw_out = {.kp = 0.0, .ki = 0.0, .kd = 0.0};
 // 偏航角 => 内环PID参数
-PID_Type pid_yaw_in = {.kp = 1.5, .ki = 0.0, .kd = 4};
-// 偏航角 限制上下范围
-uint8_t pid_yaw_limit = 0;
+PID_Type pid_yaw_in = {.kp = -0.8, .ki = 0.0, .kd = 15};
 void App_Flight_Ctrl_PID_MPU6050(void)
 {
     // PID控制算法实现
@@ -204,16 +202,18 @@ void App_Flight_Ctrl_PID_MPU6050(void)
 /**
  * @brief PID控制，根据VL53LX激光测距计算出PID目标值
  */
-PID_Type pid_fixed_height = {.kp = -0.05, .ki = 0.0, .kd = 0.6};
+PID_Type pid_fixed_height = {.kp = -0.02, .ki = 0.0, .kd = 0.6};
 void App_Flight_Ctrl_PID_VL53LX(void)
 {
 	if(flight_state != FLIGHT_FIX_HEIGHT && flight_state != FLIGHT_FIX_POSITION)
 	{
+        pid_fixed_height.output = 0;
         return;
     }
     uint8_t is_data_ready = Int_VL53L1X_Is_Data_Ready();
     if (is_data_ready == 0)
     {
+        pid_fixed_height.output = 0;
         return;
     }
     
@@ -229,8 +229,8 @@ void App_Flight_Ctrl_PID_VL53LX(void)
 /**
  * @brief PID控制，根据PMW3901光流数据计算出PID目标值
  */
-PID_Type pid_fixed_position_x = {.kp = 0.06, .ki = 0.0, .kd = 0.2};
-PID_Type pid_fixed_position_y = {.kp = 0.06, .ki = 0.0, .kd = 0.2};
+PID_Type pid_fixed_position_x = {.kp = 0.25, .ki = 0.0, .kd = 2.5};
+PID_Type pid_fixed_position_y = {.kp = 0.25, .ki = 0.0, .kd = 2.5};
 int16_t pre_delta_x = 0;
 int16_t pre_delta_y = 0;
 PMW3901_Data_Type position_data = {0};
@@ -280,19 +280,19 @@ static void App_Flight_Balanced_Posture(void)
     left_top_motor.speed = mixed_ctrl_data.throttle 
                             + pid_pitch_in.output 
                             - pid_roll_in.output
-                            - Com_Tool_Limit(pid_yaw_in.output, pid_yaw_limit * -1, pid_yaw_limit);
+                            - pid_yaw_in.output;
     left_bottom_motor.speed = mixed_ctrl_data.throttle 
                                 - pid_pitch_in.output 
                                 - pid_roll_in.output
-                                + Com_Tool_Limit(pid_yaw_in.output, pid_yaw_limit * -1, pid_yaw_limit);
+                                + pid_yaw_in.output;
     right_top_motor.speed = mixed_ctrl_data.throttle 
                                 + pid_pitch_in.output 
                                 + pid_roll_in.output
-                                + Com_Tool_Limit(pid_yaw_in.output, pid_yaw_limit * -1, pid_yaw_limit);
+                                + pid_yaw_in.output;
     right_bottom_motor.speed = mixed_ctrl_data.throttle 
                                 - pid_pitch_in.output 
                                 + pid_roll_in.output
-                                - Com_Tool_Limit(pid_yaw_in.output, pid_yaw_limit * -1, pid_yaw_limit);
+                                - pid_yaw_in.output;
 }
 
 /**
@@ -361,6 +361,6 @@ void App_Flight_Ctrl_Motor(void)
 	Int_Motor_Set_Speed(&left_bottom_motor);
 	Int_Motor_Set_Speed(&right_top_motor);
 	Int_Motor_Set_Speed(&right_bottom_motor);
-    // debug_printf(":%d,%d,%d,%d\r\n",left_top_motor.speed,left_bottom_motor.speed,right_top_motor.speed,right_bottom_motor.speed);
-
+    // debug_printf(":%d,%d,%d,%d\r\n",left_top_motor.speed,right_top_motor.speed,left_bottom_motor.speed,right_bottom_motor.speed);
+    // vTaskDelay(10);
 }
