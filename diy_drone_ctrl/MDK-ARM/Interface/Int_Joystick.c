@@ -21,6 +21,6 @@ void Int_Joystick_Get(Joystick_Type *joystick)
     // 将ADC采集的原始数据转换为摇杆的油门、偏航、俯仰和横滚值
     joystick->throttle = (int16_t)adc_buffer[0]; // 油门值
     joystick->yaw      = (int16_t)adc_buffer[1]; // 偏航值
-    joystick->pitch    = (int16_t)adc_buffer[2]; // 俯仰值
-    joystick->roll     = (int16_t)adc_buffer[3]; // 横滚值
+    joystick->roll     = (int16_t)adc_buffer[2]; // 横滚值
+    joystick->pitch    = (int16_t)adc_buffer[3]; // 俯仰值
 }

@@ -41,8 +41,22 @@ void App_Flight_Ctrl_Init(void)
  */
 // 低通滤波器中间结果
 Gyro_Data_Type pre_gyro_data;
+uint8_t gyro_data_threshold = 200;
 void App_Gyro_Data_Filter()
 {
+    // 过滤非连续的大于跳跃阈值异常数据
+    if(abs(gyro_accel_data.gyro.gyro_x - pre_gyro_data.gyro_x) > gyro_data_threshold)
+    {
+        gyro_accel_data.gyro.gyro_x = pre_gyro_data.gyro_x;
+    }
+    if(abs(gyro_accel_data.gyro.gyro_y - pre_gyro_data.gyro_y) > gyro_data_threshold)
+    {
+        gyro_accel_data.gyro.gyro_y = pre_gyro_data.gyro_y;
+    }
+    if(abs(gyro_accel_data.gyro.gyro_z - pre_gyro_data.gyro_z) > gyro_data_threshold)
+    {
+        gyro_accel_data.gyro.gyro_z = pre_gyro_data.gyro_z;
+    }
     // 2.1 实时性要求高，对准确性要求不高，不使用傅里叶变换
     // 2.2 output = 加权系数 * pre_output + (1 - 加权系数) * 本次测量值
     gyro_accel_data.gyro.gyro_x = Common_Filter_LowPass(gyro_accel_data.gyro.gyro_x, pre_gyro_data.gyro_x, LOW_PASS_WEIGHT);
@@ -53,7 +67,7 @@ void App_Gyro_Data_Filter()
 	pre_gyro_data.gyro_y = gyro_accel_data.gyro.gyro_y;
 	pre_gyro_data.gyro_z = gyro_accel_data.gyro.gyro_z;
 
-    // debug_printf(": %d, %d, %d\n", 
+    // debug_printf(": %d, %d, %d\r\n", 
     //     gyro_accel_data.gyro.gyro_x, 
     //     gyro_accel_data.gyro.gyro_y, 
     //     gyro_accel_data.gyro.gyro_z);
@@ -96,10 +110,11 @@ void App_Calc_Euler_Angle(void)
     // 四元数解算
     Com_IMU_Get_Euler_Angle(&gyro_accel_data, &euler_angle, 0.006);
 
-    // debug_printf(": %.2f, %.2f, %.2f\n", 
-    //     euler_angle.roll, 
-    //     euler_angle.pitch, 
-    //     euler_angle.yaw);
+    // debug_printf(":%.2f, %.2f, %.2f\n",
+    //         euler_angle.roll, 
+    //         euler_angle.pitch, 
+    //         euler_angle.yaw);
+
 }
 
 /**
@@ -128,21 +143,21 @@ void App_Flight_Ctrl_Get_Euler_Angle(void)
  */
 
 // 俯仰角 => 外环PID参数
-PID_Type pid_pitch_out = {.kp = 2.0, .ki = 0.0, .kd = 4};
+PID_Type pid_pitch_out = {.kp = 0.0, .ki = 0.0, .kd = 0};
 // 俯仰角 => 内环PID参数
-PID_Type pid_pitch_in = {.kp = 3, .ki = 0.0, .kd = 12};
+PID_Type pid_pitch_in = {.kp = 0.3, .ki = 0.0, .kd = 2};
 
 // 横滚角 => 外环PID参数
-PID_Type pid_roll_out = {.kp = 2.0, .ki = 0.0, .kd = 4};
+PID_Type pid_roll_out = {.kp = 0.0, .ki = 0.0, .kd = 0};
 // 横滚角 => 内环PID参数
-PID_Type pid_roll_in = {.kp = 3, .ki = 0.0, .kd = 12};
+PID_Type pid_roll_in = {.kp = 0.3, .ki = 0.0, .kd = 2};
 
 // 偏航角 => 外环PID参数
-PID_Type pid_yaw_out = {.kp = 3.0, .ki = 0.0, .kd = 6.0};
+PID_Type pid_yaw_out = {.kp = 0.0, .ki = 0.0, .kd = 0.0};
 // 偏航角 => 内环PID参数
 PID_Type pid_yaw_in = {.kp = 1.5, .ki = 0.0, .kd = 4};
-// 偏航角 限制上下范围，减少对油门影响
-uint8_t pid_yaw_limit = 100;
+// 偏航角 限制上下范围
+uint8_t pid_yaw_limit = 0;
 void App_Flight_Ctrl_PID_MPU6050(void)
 {
     // PID控制算法实现
@@ -183,6 +198,7 @@ void App_Flight_Ctrl_PID_MPU6050(void)
 
     // 3.3 计算PID输出值
     Com_PID_Calc_Chain(&pid_yaw_out, &pid_yaw_in);
+    //debug_printf(":%d,%.2f,%d,%.2f\r\n", mixed_ctrl_data.yaw, euler_angle.yaw,gyro_accel_data.gyro.gyro_z,pid_yaw_in.output);
 }
 
 /**
@@ -215,6 +231,8 @@ void App_Flight_Ctrl_PID_VL53LX(void)
  */
 PID_Type pid_fixed_position_x = {.kp = 0.06, .ki = 0.0, .kd = 0.2};
 PID_Type pid_fixed_position_y = {.kp = 0.06, .ki = 0.0, .kd = 0.2};
+int16_t pre_delta_x = 0;
+int16_t pre_delta_y = 0;
 PMW3901_Data_Type position_data = {0};
 void App_Flight_Ctrl_PID_PMW3901(void)
 {
@@ -225,6 +243,14 @@ void App_Flight_Ctrl_PID_PMW3901(void)
 
     // 读取光流数据，使用 delta_x / delta_y 作为位置漂移误差
     Int_PMW3901_Get_Data(&position_data);
+    if(position_data.delta_x != 0){
+        position_data.delta_x = Common_Filter_LowPass(position_data.delta_x, pre_delta_x, LOW_PASS_WEIGHT);
+        pre_delta_x = position_data.delta_x;
+    }
+    if(position_data.delta_y != 0){
+        position_data.delta_y = Common_Filter_LowPass(position_data.delta_y, pre_delta_y, LOW_PASS_WEIGHT);
+        pre_delta_y = position_data.delta_y;
+    }
 
     // 位置保持：目标值为 0，误差 = 当前漂移
     pid_fixed_position_x.target = 0.0f;
@@ -235,6 +261,7 @@ void App_Flight_Ctrl_PID_PMW3901(void)
     pid_fixed_position_y.measure = (float)position_data.delta_y;
     Com_PID_Calc(&pid_fixed_position_y);
 }
+
 
 static void App_Flight_Locked_Posture(void)
 {
@@ -250,9 +277,6 @@ static void App_Flight_Locked_Posture(void)
 static void App_Flight_Balanced_Posture(void)
 {
 	// 起飞状态
-    // 俯仰角 => 向前飞有角速度 => 正误差 =>目的是让角速度为0 => 需要一个向后的反馈，前面两个电机转得快，后面两个转得慢
-    // 横滚角 => 向右飞有角速度 => 正误差 =>目的是让角速度为0 => 需要一个向左的反馈，右边两个电机转得快，左边两个转得慢
-    // 偏航角 => 逆时针转有角速度 => 正误差 =>目的是让角速度为0 => 需要一个顺时针的反馈，左上右下电机转得慢，右上左下转得快
     left_top_motor.speed = mixed_ctrl_data.throttle 
                             + pid_pitch_in.output 
                             - pid_roll_in.output
@@ -337,5 +361,6 @@ void App_Flight_Ctrl_Motor(void)
 	Int_Motor_Set_Speed(&left_bottom_motor);
 	Int_Motor_Set_Speed(&right_top_motor);
 	Int_Motor_Set_Speed(&right_bottom_motor);
+    // debug_printf(":%d,%d,%d,%d\r\n",left_top_motor.speed,left_bottom_motor.speed,right_top_motor.speed,right_bottom_motor.speed);
 
 }

@@ -166,6 +166,7 @@ void Int_MPU6050_Get_Gyro(Gyro_Data_Type *gyro_data)
     gyro_data->gyro_y -= gyro_accel_offset.gyro.gyro_y;
     gyro_data->gyro_z -= gyro_accel_offset.gyro.gyro_z;
 
+    // debug_printf(":%d,%d,%d\r\n",gyro_data->gyro_x, gyro_data->gyro_y, gyro_data->gyro_z);
 
     // 根据量程选择，计算实际的角速度值
     // 0 => +-250°/s => 131 LSB/°/s
