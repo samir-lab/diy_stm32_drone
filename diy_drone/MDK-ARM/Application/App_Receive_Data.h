@@ -11,7 +11,7 @@
 #define FRAME_HEADER_CHECK_3 'Q'
 
 // 最大重试次数
-#define MAX_RETRY_COUNT 1000
+#define MAX_RETRY_COUNT 500
 
 /**
  * @brief 接收遥控器数据

@@ -348,6 +348,10 @@ void App_Flight_Ctrl_Motor(void)
             App_Flight_Fixed_Height_Posture();
             break;
         case FLIGHT_FAULT:
+            left_top_motor.speed -= 1;
+			left_bottom_motor.speed -= 1;
+			right_top_motor.speed -= 1;
+			right_bottom_motor.speed -= 1;
             break;
         default:
             break;

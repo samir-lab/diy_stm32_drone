@@ -221,7 +221,7 @@ void App_Check_Flight_State(void)
             break;
         case FLIGHT_FAULT:
             // 处理故障失联
-            // TODO
+            vTaskDelay(6000);
             flight_state = FLIGHT_IDLE;
             break;
         default:
