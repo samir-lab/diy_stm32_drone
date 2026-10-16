@@ -115,17 +115,17 @@ void Int_PMW3901_Init(void)
 	Int_PMW3901_Read_Reg(0x05);
 	Int_PMW3901_Read_Reg(0x06);
 
-
     // 配置寄存器
     Int_PMW3901_InitReg();
     vTaskDelay(50);
 
     // 读取ProductId验证初始化成功
     uint8_t product_id = Int_PMW3901_Read_Reg(PMW3901_PRODUCT_ID);
-	debug_printf("[PMW3901] Init ProductId: 0x%02X\r\n", product_id);
-    if (product_id != CHIP_ID)
+  	uint8_t inverse_product_id = Int_PMW3901_Read_Reg(PMW3901_INVERSE_PRODUCT_ID);
+	debug_printf("[PMW3901] Init ProductId: 0x%02X, InverseProductId: 0x%02X\r\n", product_id, inverse_product_id);
+    if (product_id != CHIP_ID || inverse_product_id != CHIP_ID_INVERSE)
     {
-        debug_printf("[PMW3901] Init failed! ProductId: 0x%02X\r\n", product_id);
+        debug_printf("[PMW3901] Init failed! ProductId: 0x%02X, InverseProductId: 0x%02X\r\n", product_id, inverse_product_id);
         return;
     }
 
@@ -136,7 +136,8 @@ void Int_PMW3901_Init(void)
  * @brief 获取PMW3901运动数据
  * @param data 结构体输出
  */
-uint8_t PMW3901_DEAD_ZONE = 12;
+uint8_t PMW3901_DEAD_ZONE = 10;
+uint8_t PMW3901_SIMPLE_THRESHOLD = 255;
 void Int_PMW3901_Get_Data(PMW3901_Data_Type *data)
 {
     if (data == NULL)
@@ -152,6 +153,7 @@ void Int_PMW3901_Get_Data(PMW3901_Data_Type *data)
 	// motion=176 表示 Motion 发生，数据有效，Run Mode 正常
 	if(motion == 48)
 	{
+		// debug_printf("motion ==> 48\n");
 		data->delta_x = 0;
 		data->delta_y = 0;
 		return;
@@ -169,8 +171,9 @@ void Int_PMW3901_Get_Data(PMW3901_Data_Type *data)
 	 */
     uint8_t squal = Int_PMW3901_Read_Reg(PMW3901_SQUAL);
     data->squal = squal;
-	if(squal < 60)
+	if(squal < 20)
 	{
+		// debug_printf("squal ================> %d\n", squal);
 		data->delta_x = 0;
 		data->delta_y = 0;
 		return;
@@ -203,11 +206,20 @@ void Int_PMW3901_Get_Data(PMW3901_Data_Type *data)
     data->delta_y = (int16_t)((uint16_t)delta_y_h << 8 | delta_y_l);
 
 	// 过滤死区数据
-	if (data->delta_x > PMW3901_DEAD_ZONE * -1 && data->delta_x < PMW3901_DEAD_ZONE)
+	if (abs(data->delta_x) < PMW3901_DEAD_ZONE)
 	{
 		data->delta_x = 0;
 	}
-	if (data->delta_y > PMW3901_DEAD_ZONE * -1 && data->delta_y < PMW3901_DEAD_ZONE)
+	if (abs(data->delta_y) < PMW3901_DEAD_ZONE)
+	{
+		data->delta_y = 0;
+	}
+	// 过滤毛刺数据
+	if (abs(data->delta_x) > PMW3901_SIMPLE_THRESHOLD)
+	{
+		data->delta_x = 0;
+	}
+	if (abs(data->delta_y) > PMW3901_SIMPLE_THRESHOLD)
 	{
 		data->delta_y = 0;
 	}
@@ -215,20 +227,6 @@ void Int_PMW3901_Get_Data(PMW3901_Data_Type *data)
 
 void Int_PMW3901_InitReg(void)
 {
-	PMW3901_CS_LOW;
-	Int_PMW3901_Write_Reg(0x7F, 0x00);
-	Int_PMW3901_Write_Reg(0x55, 0x01);
-	Int_PMW3901_Write_Reg(0x50, 0x07);
-	Int_PMW3901_Write_Reg(0x7F, 0x0E);
-	Int_PMW3901_Write_Reg(0x43, 0x10);
-	Int_PMW3901_Write_Reg(0x48, 0x02);
-	
-	Int_PMW3901_Write_Reg(0x7F, 0x00);
-	Int_PMW3901_Write_Reg(0x51, 0x7B);
-	Int_PMW3901_Write_Reg(0x50, 0x00);
-	Int_PMW3901_Write_Reg(0x55, 0x00);
-	Int_PMW3901_Write_Reg(0x7F, 0x0E);
-	
 	Int_PMW3901_Write_Reg(0x7F, 0x00);
 	Int_PMW3901_Write_Reg(0x61, 0xAD);
 	Int_PMW3901_Write_Reg(0x7F, 0x03);
@@ -271,11 +269,11 @@ void Int_PMW3901_InitReg(void)
 	Int_PMW3901_Write_Reg(0x64, 0xFF);
 	Int_PMW3901_Write_Reg(0x65, 0x1F);
 	Int_PMW3901_Write_Reg(0x7F, 0x14);
-	Int_PMW3901_Write_Reg(0x65, 0x67);
+	Int_PMW3901_Write_Reg(0x65, 0x60);
 	Int_PMW3901_Write_Reg(0x66, 0x08);
-	Int_PMW3901_Write_Reg(0x63, 0x70);
+	Int_PMW3901_Write_Reg(0x63, 0x78);
 	Int_PMW3901_Write_Reg(0x7F, 0x15);
-	Int_PMW3901_Write_Reg(0x48, 0x48);
+	Int_PMW3901_Write_Reg(0x48, 0x58);
 	Int_PMW3901_Write_Reg(0x7F, 0x07);
 	Int_PMW3901_Write_Reg(0x41, 0x0D);
 	Int_PMW3901_Write_Reg(0x43, 0x14);
@@ -288,22 +286,21 @@ void Int_PMW3901_InitReg(void)
 	Int_PMW3901_Write_Reg(0x7F, 0x07);
 	Int_PMW3901_Write_Reg(0x40, 0x41);
 	Int_PMW3901_Write_Reg(0x70, 0x00);
-	vTaskDelay(10);
-	
+
+	vTaskDelay(100);
 	Int_PMW3901_Write_Reg(0x32, 0x44);
 	Int_PMW3901_Write_Reg(0x7F, 0x07);
 	Int_PMW3901_Write_Reg(0x40, 0x40);
 	Int_PMW3901_Write_Reg(0x7F, 0x06);
-	Int_PMW3901_Write_Reg(0x62, 0xF0);
+	Int_PMW3901_Write_Reg(0x62, 0xf0);
 	Int_PMW3901_Write_Reg(0x63, 0x00);
 	Int_PMW3901_Write_Reg(0x7F, 0x0D);
 	Int_PMW3901_Write_Reg(0x48, 0xC0);
-	Int_PMW3901_Write_Reg(0x6F, 0xD5);
+	Int_PMW3901_Write_Reg(0x6F, 0xd5);
 	Int_PMW3901_Write_Reg(0x7F, 0x00);
-	Int_PMW3901_Write_Reg(0x5B, 0xA0);
+	Int_PMW3901_Write_Reg(0x5B, 0xa0);
 	Int_PMW3901_Write_Reg(0x4E, 0xA8);
 	Int_PMW3901_Write_Reg(0x5A, 0x50);
 	Int_PMW3901_Write_Reg(0x40, 0x80);
 	
-	PMW3901_CS_HIGH;
 }

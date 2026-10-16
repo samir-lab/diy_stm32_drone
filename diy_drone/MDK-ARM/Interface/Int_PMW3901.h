@@ -5,6 +5,7 @@
 #include "task.h"
 #include "spi.h"
 #include "Com_debug.h"
+#include <stdlib.h>
 
 #define PMW3901_CS_LOW            HAL_GPIO_WritePin(SPI2_NSS_GPIO_Port, SPI2_NSS_Pin, GPIO_PIN_RESET)
 #define PMW3901_CS_HIGH           HAL_GPIO_WritePin(SPI2_NSS_GPIO_Port, SPI2_NSS_Pin, GPIO_PIN_SET)
@@ -52,6 +53,7 @@
 
 
 #define CHIP_ID         0x49  // 01001001
+#define CHIP_ID_INVERSE 0xB6  // 10110110
 
 typedef struct
 {

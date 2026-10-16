@@ -202,7 +202,7 @@ void App_Flight_Ctrl_PID_MPU6050(void)
 /**
  * @brief PID控制，根据VL53LX激光测距计算出PID目标值
  */
-PID_Type pid_fixed_height = {.kp = -0.02, .ki = 0.0, .kd = 0.6};
+PID_Type pid_fixed_height = {.kp = -0.8, .ki = 0.0, .kd = 15};
 void App_Flight_Ctrl_PID_VL53LX(void)
 {
 	if(flight_state != FLIGHT_FIX_HEIGHT && flight_state != FLIGHT_FIX_POSITION)
@@ -223,6 +223,8 @@ void App_Flight_Ctrl_PID_VL53LX(void)
 	pid_fixed_height.measure = curr_distance;
 
     Com_PID_Calc(&pid_fixed_height);
+
+    // debug_printf(":%d, %d, %.2f\n", fixed_height_target, curr_distance, pid_fixed_height.output);
 }
 
 
@@ -231,22 +233,15 @@ void App_Flight_Ctrl_PID_VL53LX(void)
  * @note 外环：位置环; 内环：速度环
  */
 // x轴
-PID_Type pid_fixed_pos_x_out = {.kp = -1.5, .ki = 0.0, .kd = 3.0};
-PID_Type pid_fixed_pos_x_in = {.kp = -2.5, .ki = 0.0, .kd = 5};
-float pid_fixed_pos_x = 0;
-// y轴
-PID_Type pid_fixed_pos_y_out = {.kp = -1.5, .ki = 0.0, .kd = 3.0};
-PID_Type pid_fixed_pos_y_in = {.kp = -2.5, .ki = 0.0, .kd = 5};
-float pid_fixed_pos_y = 0;
+PID_Type pid_fixed_pos_x = {.kp = 0.8, .ki = 0.0, .kd = 15};
+PID_Type pid_fixed_pos_y = {.kp = 0.8, .ki = 0.0, .kd = 15};
 PMW3901_Data_Type position_data = {0};
 void App_Flight_Ctrl_PID_PMW3901(void)
 {
     if (flight_state != FLIGHT_FIX_POSITION)
 	{
-        pid_fixed_pos_x_in.output = 0;
-        pid_fixed_pos_y_in.output = 0;
-        pid_fixed_pos_x = 0;
-        pid_fixed_pos_y = 0;
+        pid_fixed_pos_x.output = 0;
+        pid_fixed_pos_y.output = 0;
         return;
     }
 
@@ -255,39 +250,20 @@ void App_Flight_Ctrl_PID_PMW3901(void)
 
     if(position_data.delta_x == 0 && position_data.delta_y == 0)
     {
-        pid_fixed_pos_x_in.output = 0;
-        pid_fixed_pos_y_in.output = 0;
-        pid_fixed_pos_x = 0;
-        pid_fixed_pos_y = 0;
+        pid_fixed_pos_x.output = 0;
+        pid_fixed_pos_y.output = 0;
 		return;
     }
 
-    // X轴：外环位置控制，目标位置为 0
-    // 高度 h（单位m）
-    // 视场角 FOV（单位°，典型42°）
-    // 单像素地面尺寸 = (2 × h × tan(FOV/2)) / 35
-    // 速度(m/s) = 像素位移 × 单像素地面尺寸(m) × FPS
-    float cache_val = (fixed_height_target/1000.0f) * 0.021935 * (1/0.006f);
-    float vx =  cache_val * position_data.delta_x;
-    pid_fixed_pos_x += vx * 0.006f;
-    pid_fixed_pos_x_out.target = 0.0f;
-    pid_fixed_pos_x_out.measure = pid_fixed_pos_x;
-    // X轴：内环速度控制，速度目标 = 位置环输出，速度测量 = x 方向漂移速度
-    pid_fixed_pos_x_in.measure = vx;
-    Com_PID_Calc_Chain(&pid_fixed_pos_x_out, &pid_fixed_pos_x_in);
+    pid_fixed_pos_x.target = 0.0f;
+    pid_fixed_pos_x.measure = position_data.delta_x;
+    Com_PID_Calc(&pid_fixed_pos_x);
 
-    // Y轴：外环位置控制，目标位置为 0，误差 = 当前 y 方向漂移量
-    float vy = cache_val * position_data.delta_y;
-    pid_fixed_pos_y += vy * 0.006f;
-    pid_fixed_pos_y_out.target = 0.0f;
-    pid_fixed_pos_y_out.measure = pid_fixed_pos_y;
-    // Y轴：内环速度控制，速度目标 = 位置环输出，速度测量 = y 方向漂移速度
-    pid_fixed_pos_y_in.measure = vy;
-    Com_PID_Calc_Chain(&pid_fixed_pos_y_out, &pid_fixed_pos_y_in);
+    pid_fixed_pos_y.target = 0.0f;
+    pid_fixed_pos_y.measure = position_data.delta_y;
+    Com_PID_Calc(&pid_fixed_pos_y);
 
-
-    // debug_printf(":%.4f, %.4f, %.4f, %.4f\n", vx, pid_fixed_pos_x, vy, pid_fixed_pos_y);
-    // debug_printf(":%.2f, %.2f\n", pid_fixed_pos_x_in.output, pid_fixed_pos_y_in.output);
+    // debug_printf(":%d, %d, %.2f, %.2f\n", position_data.delta_x, position_data.delta_y, pid_fixed_pos_x.output, pid_fixed_pos_y.output);
 }
 
 
@@ -341,10 +317,10 @@ static void App_Flight_Fixed_Height_Posture(void)
 static void App_Flight_Fixed_Position_Posture(void)
 {
     App_Flight_Fixed_Height_Posture();
-	left_top_motor.speed = left_top_motor.speed + pid_fixed_pos_x_in.output + pid_fixed_pos_y_in.output;
-    left_bottom_motor.speed = left_bottom_motor.speed + pid_fixed_pos_x_in.output - pid_fixed_pos_y_in.output;
-    right_top_motor.speed = right_top_motor.speed - pid_fixed_pos_x_in.output + pid_fixed_pos_y_in.output;
-    right_bottom_motor.speed = right_bottom_motor.speed -pid_fixed_pos_x_in.output - pid_fixed_pos_y_in.output;
+	left_top_motor.speed = left_top_motor.speed + pid_fixed_pos_x.output + pid_fixed_pos_y.output;
+    left_bottom_motor.speed = left_bottom_motor.speed + pid_fixed_pos_x.output - pid_fixed_pos_y.output;
+    right_top_motor.speed = right_top_motor.speed - pid_fixed_pos_x.output + pid_fixed_pos_y.output;
+    right_bottom_motor.speed = right_bottom_motor.speed -pid_fixed_pos_x.output - pid_fixed_pos_y.output;
 }
 
 
@@ -390,5 +366,4 @@ void App_Flight_Ctrl_Motor(void)
 	Int_Motor_Set_Speed(&right_top_motor);
 	Int_Motor_Set_Speed(&right_bottom_motor);
     // debug_printf(":%d,%d,%d,%d\r\n",left_top_motor.speed,right_top_motor.speed,left_bottom_motor.speed,right_bottom_motor.speed);
-    // vTaskDelay(10);
 }
