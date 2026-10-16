@@ -143,12 +143,12 @@ void App_Flight_Ctrl_Get_Euler_Angle(void)
  */
 
 // 俯仰角 => 外环PID参数
-PID_Type pid_pitch_out = {.kp = 0.0, .ki = 0.0, .kd = 0};
+PID_Type pid_pitch_out = {.kp = 0.12, .ki = 0.0, .kd = 0.3};
 // 俯仰角 => 内环PID参数
 PID_Type pid_pitch_in = {.kp = 0.8, .ki = 0.0, .kd = 15};
 
 // 横滚角 => 外环PID参数
-PID_Type pid_roll_out = {.kp = 0.0, .ki = 0.0, .kd = 0};
+PID_Type pid_roll_out = {.kp = 0.12, .ki = 0.0, .kd = 0.3};
 // 横滚角 => 内环PID参数
 PID_Type pid_roll_in = {.kp = 0.8, .ki = 0.0, .kd = 15};
 
@@ -202,7 +202,7 @@ void App_Flight_Ctrl_PID_MPU6050(void)
 /**
  * @brief PID控制，根据VL53LX激光测距计算出PID目标值
  */
-PID_Type pid_fixed_height = {.kp = -0.8, .ki = 0.0, .kd = 15};
+PID_Type pid_fixed_height = {.kp = -0.4, .ki = 0.0, .kd = 15};
 void App_Flight_Ctrl_PID_VL53LX(void)
 {
 	if(flight_state != FLIGHT_FIX_HEIGHT && flight_state != FLIGHT_FIX_POSITION)
@@ -230,7 +230,6 @@ void App_Flight_Ctrl_PID_VL53LX(void)
 
 /**
  * @brief PID控制，根据PMW3901光流数据计算出PID目标值
- * @note 外环：位置环; 内环：速度环
  */
 // x轴
 PID_Type pid_fixed_pos_x = {.kp = 0.8, .ki = 0.0, .kd = 15};
