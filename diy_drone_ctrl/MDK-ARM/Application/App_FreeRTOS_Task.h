@@ -7,6 +7,7 @@
 #include "Int_IP5305T.h"
 #include "App_Data_Mixer.h"
 #include "App_Transmit_Data.h"
+#include "App_Display.h"
 
 /**
  * @brief 启动FreeRTOS操作系统

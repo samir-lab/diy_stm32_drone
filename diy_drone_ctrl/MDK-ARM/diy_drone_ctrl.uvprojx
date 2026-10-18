@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F103xB</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;./FreeRTOS;./FreeRTOS/include;./FreeRTOS/portable;./Application;./Common;./Interface</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;./FreeRTOS;./FreeRTOS/include;./FreeRTOS/portable;./Application;./Common;./Interface;.\Interface\oled</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1165,6 +1165,26 @@
           </Files>
         </Group>
         <Group>
+          <GroupName>Interface/oled</GroupName>
+          <Files>
+            <File>
+              <FileName>Int_Font.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Interface\oled\Int_Font.h</FilePath>
+            </File>
+            <File>
+              <FileName>Int_OLED.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Interface\oled\Int_OLED.c</FilePath>
+            </File>
+            <File>
+              <FileName>Int_OLED.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Interface\oled\Int_OLED.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
           <GroupName>Application</GroupName>
           <Files>
             <File>
@@ -1196,6 +1216,16 @@
               <FileName>App_Transmit_Data.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Application\App_Transmit_Data.h</FilePath>
+            </File>
+            <File>
+              <FileName>App_Display.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Application\App_Display.c</FilePath>
+            </File>
+            <File>
+              <FileName>App_Display.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Application\App_Display.h</FilePath>
             </File>
           </Files>
         </Group>

@@ -30,6 +30,11 @@ void joystick_task(void *args);
 TaskHandle_t joystick_task_handle;
 #define JOYSTICK_TASK_PERIOD 20 // 20毫秒
 
+// OLED任务
+void oled_task(void *args);
+TaskHandle_t oled_task_handle;
+#define OLED_TASK_PERIOD 100 // 100毫秒
+
 void App_FreeRTOS_Start(void)
 {
     // 1. 创建任务
@@ -37,6 +42,7 @@ void App_FreeRTOS_Start(void)
     xTaskCreate(comm_task, "comm_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_HIGH, &comm_task_handle);
     xTaskCreate(key_task, "key_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_MEDIUM, &key_task_handle);
     xTaskCreate(joystick_task, "joystick_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_MEDIUM, &joystick_task_handle);
+    xTaskCreate(oled_task, "oled_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_MEDIUM, &oled_task_handle);
 
     // 2. 启动调度器
     vTaskStartScheduler();
@@ -89,5 +95,15 @@ void joystick_task(void *args)
         vTaskDelayUntil(&last_wake_time, JOYSTICK_TASK_PERIOD);
         // 处理摇杆数据
         App_Joystick_Data_Process();
+    }
+}
+
+void oled_task(void *args)
+{
+    TickType_t last_wake_time = xTaskGetTickCount();
+    App_Dispaly_Init();
+    while(1){
+        vTaskDelayUntil(&last_wake_time, OLED_TASK_PERIOD);
+        App_Dispaly_Show();
     }
 }
