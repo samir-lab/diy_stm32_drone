@@ -58,7 +58,7 @@ void App_Key_Data_Process(void)
             break;
         case KEY_DOWN:
             // 处理KEY_DOWN事件
-            if (remote_ctrl_data.pid_p_roll - 2 < 0)
+            if (remote_ctrl_data.pid_p_pitch - 2 < 0)
             {
                 remote_ctrl_data.pid_p_pitch = 0;
             }

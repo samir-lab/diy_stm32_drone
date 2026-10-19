@@ -11,14 +11,14 @@ typedef struct {
     uint8_t shutdown;  // 关机标志位   1:关机 0:不关机
     uint8_t fixed_height; // 定高标志位   切换为1表示定高，切换为0表示不定高
     uint8_t fixed_position; // 悬停标志位   切换为1表示悬停，切换为0表示不悬停
-    uint8_t pid_p_pitch; // 俯仰PID比例系数
-    uint8_t pid_p_roll;  // 横滚PID比例系数
+    uint16_t pid_p_pitch; // 俯仰PID比例系数（*100后的整数值）
+    uint16_t pid_p_roll;  // 横滚PID比例系数（*100后的整数值）
 } Remote_Ctrl_Data_Type;
 
 typedef struct {
-    uint8_t voltage;
-    uint8_t pid_p_pitch; 
-    uint8_t pid_p_roll;
+    uint16_t voltage; // 电池电压，voltage*100后的整数值
+    uint16_t pid_p_pitch; // 俯仰PID比例系数（*100后的整数值）
+    uint16_t pid_p_roll;  // 横滚PID比例系数（*100后的整数值）
 } Flight_Ctrl_Data_Type;
 
 
