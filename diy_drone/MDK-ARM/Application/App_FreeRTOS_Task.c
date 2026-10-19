@@ -176,6 +176,8 @@ void led_task(void *args)
 
 void comm_task(void *args)
 {
+    // 初始化SI24R1无线模块
+    Int_SI24R1_Init();
     // 初始化电压检测
     Int_BAT_ADC_Init();
     while(1){

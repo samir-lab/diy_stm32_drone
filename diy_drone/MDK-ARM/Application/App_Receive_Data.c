@@ -94,6 +94,8 @@ void App_Send_Data(void)
     flight_ctrl_data.pid_p_roll = pid_p_roll;
     flight_ctrl_data.voltage = voltage;
 
+    // 清空发送缓冲区
+    memset(comm_tx_buffer, 0, SI24R1_TX_PLOAD_WIDTH);
     // 进入发送模式
 	Int_SI24R1_TX_Mode();
     // 调用SI24R1接口，发送数据

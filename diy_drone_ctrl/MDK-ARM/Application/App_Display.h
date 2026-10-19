@@ -2,6 +2,7 @@
 #define __APP_DISPLAY_H__
 
 #include "Int_OLED.h"
+#include "App_Transmit_Data.h"
 
 /**
  * 初始化OLED显示屏

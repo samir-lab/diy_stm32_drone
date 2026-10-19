@@ -1,14 +1,10 @@
 #include "App_Data_Mixer.h"
 
-// 整合控制数据
-Mixed_Ctrl_Data_Type mixed_ctrl_data;
+// 遥控数据
+extern Remote_Ctrl_Data_Type remote_ctrl_data;
 
 // 摇杆数据
 Joystick_Type joystick;
-
-// 按键微调数据
-int16_t key_pitch_offset = 0; // 按键微调俯仰偏移量
-int16_t key_roll_offset = 0;   // 按键微调横滚偏移量
 
 // 摇杆零偏数据
 int16_t throttle_offset = 0; // 油门零偏
@@ -20,10 +16,6 @@ int16_t roll_offset = 0;     // 横滚零偏
  */
 void App_Joystick_Calibrate(void)
 {
-    // 清除按键微调数据
-    key_pitch_offset = 0;
-    key_roll_offset = 0;
-
     // 多次读取误差取平均值
     int16_t throttle_offset_sum = 0;
     int16_t yaw_offset_sum = 0;
@@ -61,32 +53,46 @@ void App_Key_Data_Process(void)
     // 处理按键事件
     switch(key){
         case KEY_UP:
-            // 处理KEY_UP事件（向前飞行微调，俯仰角+）
-            key_pitch_offset += 10;
+            // 处理KEY_UP事件
+            remote_ctrl_data.pid_p_pitch += 2;
             break;
         case KEY_DOWN:
-            // 处理KEY_DOWN事件（向后飞行微调，俯仰角-）
-            key_pitch_offset -= 10;
+            // 处理KEY_DOWN事件
+            if (remote_ctrl_data.pid_p_roll - 2 < 0)
+            {
+                remote_ctrl_data.pid_p_pitch = 0;
+            }
+            else
+            {
+                remote_ctrl_data.pid_p_pitch -= 2;
+            }
             break;
         case KEY_LEFT:
-            // 处理KEY_LEFT事件（向左飞行微调，横滚角-）
-            key_roll_offset -= 10;
+            // 处理KEY_LEFT事件
+            if (remote_ctrl_data.pid_p_roll - 2 < 0)
+            {
+                remote_ctrl_data.pid_p_roll = 0;
+            }
+            else
+            {
+                remote_ctrl_data.pid_p_roll -= 2;
+            }
             break;
         case KEY_RIGHT:
-            // 处理KEY_RIGHT事件（向右飞行微调，横滚角+）
-            key_roll_offset += 10;
+            // 处理KEY_RIGHT事件
+            remote_ctrl_data.pid_p_roll += 2;
             break;
         case KEY_LEFT_X:
             // 处理KEY_LEFT_X事件（短按切换悬停）
-            mixed_ctrl_data.fixed_position = (uint8_t)!mixed_ctrl_data.fixed_position;
+            remote_ctrl_data.fixed_position = (uint8_t)!remote_ctrl_data.fixed_position;
             break;
         case KEY_LEFT_X_LONG:
             // 处理KEY_LEFT_X_LONG事件（长按开关机）
-            mixed_ctrl_data.shutdown = (uint8_t)!mixed_ctrl_data.shutdown;
+            remote_ctrl_data.shutdown = (uint8_t)!remote_ctrl_data.shutdown;
             break;
         case KEY_RIGHT_X:
             // 处理KEY_RIGHT_X事件（短按切换定高）
-            mixed_ctrl_data.fixed_height = (uint8_t)!mixed_ctrl_data.fixed_height; 
+            remote_ctrl_data.fixed_height = (uint8_t)!remote_ctrl_data.fixed_height; 
             break;
         case KEY_RIGHT_X_LONG:
             // 处理KEY_RIGHT_X_LONG事件（长按摇杆校准）
@@ -130,20 +136,16 @@ void App_Joystick_Data_Process(void)
     joystick.pitch -= pitch_offset;
     joystick.roll -= roll_offset;
 
-    // 4.处理按键微调
-    joystick.pitch += key_pitch_offset;
-    joystick.roll += key_roll_offset;
-
-    // 5.限制范围
+    // 4.限制范围
     joystick.throttle = Com_Tool_Limit(joystick.throttle, 0, 1000);
     joystick.yaw = Com_Tool_Limit(joystick.yaw, 0, 1000);
     joystick.pitch = Com_Tool_Limit(joystick.pitch, 0, 1000);
     joystick.roll = Com_Tool_Limit(joystick.roll, 0, 1000);
 
-    mixed_ctrl_data.throttle = joystick.throttle;
-    mixed_ctrl_data.yaw = joystick.yaw;
-    mixed_ctrl_data.pitch = joystick.pitch;
-    mixed_ctrl_data.roll = joystick.roll;
+    remote_ctrl_data.throttle = joystick.throttle;
+    remote_ctrl_data.yaw = joystick.yaw;
+    remote_ctrl_data.pitch = joystick.pitch;
+    remote_ctrl_data.roll = joystick.roll;
     // 退出临界区
     taskEXIT_CRITICAL();
 }

@@ -18,7 +18,7 @@ TaskHandle_t power_task_handle;
 // 通讯任务
 void comm_task(void *args);
 TaskHandle_t comm_task_handle;
-#define COMM_TASK_PERIOD 6 // 6毫秒
+#define COMM_TASK_PERIOD 20 // 20毫秒
 
 // 按键任务
 void key_task(void *args);
@@ -63,12 +63,13 @@ void power_task(void *args)
 
 void comm_task(void *args)
 {
-    // 获取当前基准时间
-    TickType_t last_wake_time = xTaskGetTickCount();
+    // 初始化SI24R1无线模块
+    Int_SI24R1_Init();
     while(1){
-        // 每6毫秒执行一次
-        vTaskDelayUntil(&last_wake_time, COMM_TASK_PERIOD);
+        // 每20毫秒执行一次
+        vTaskDelay(COMM_TASK_PERIOD);
         App_Transmit_Data();
+        App_Receive_Data();
     }
 }
 

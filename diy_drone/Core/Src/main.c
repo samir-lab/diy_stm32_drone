@@ -28,7 +28,6 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "App_FreeRTOS_Task.h"
-#include "Int_SI24R1.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -105,8 +104,6 @@ int main(void)
   /* USER CODE BEGIN 2 */
   // 欢迎我们的朋友Samir
 	debug_printf("Hello Samir!\r\n");
-  // 初始化SI24R1无线模块
-  Int_SI24R1_Init();  
   // 启动FreeRTOS操作系统
   App_FreeRTOS_Start();
 
