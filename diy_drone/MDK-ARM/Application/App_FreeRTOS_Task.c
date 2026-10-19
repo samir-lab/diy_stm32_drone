@@ -178,6 +178,8 @@ void comm_task(void *args)
 {
     // 获取当前基准时间
     TickType_t last_wake_time = xTaskGetTickCount();
+    // 初始化电压检测
+    Int_BAT_ADC_Init();
     while(1){
         // 每6ms执行一次 => 通讯任务
         vTaskDelayUntil(&last_wake_time, COMM_TASK_PERIOD);
@@ -195,5 +197,7 @@ void comm_task(void *args)
         }
         // 4.处理飞行状态
         App_Check_Flight_State();
+        // 5.回传飞机数据
+        debug_printf("battery: %f\r\n", Int_BAT_ADC_Read());
     }
 }

@@ -7,6 +7,7 @@
 #include "Com_config.h"
 #include "Int_IP5305T.h"
 #include "Int_LED.h"
+#include "Int_BAT_ADC.h"
 #include "App_Receive_Data.h"
 #include "App_Flight_Ctrl.h"
 

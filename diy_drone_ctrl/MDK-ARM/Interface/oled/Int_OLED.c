@@ -235,8 +235,7 @@ void OLED_ShowString(uint8_t x, uint8_t y, const uint8_t *p, uint8_t size, uint8
  */
 void OLED_Init(void)
 { 	
- 
- 	GPIO_InitTypeDef  GPIO_InitStructure;
+ 	GPIO_InitTypeDef  GPIO_InitStructure = {0};
     // GPIOA
  	HAL_GPIO_WritePin(OLED_CS_GPIO, OLED_CS_Pin, GPIO_PIN_SET);
     HAL_GPIO_WritePin(OLED_SDIN_GPIO, OLED_SDIN_Pin, GPIO_PIN_SET);
@@ -255,7 +254,7 @@ void OLED_Init(void)
 	GPIO_InitStructure.Pull = GPIO_NOPULL;
 	GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStructure);
-  							  
+
 	OLED_RST_Clr();
 	HAL_Delay(100);
 	OLED_RST_Set(); 

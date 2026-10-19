@@ -6,6 +6,8 @@ extern Mixed_Ctrl_Data_Type mixed_ctrl_data;
 uint8_t comm_tx_buff[SI24R1_TX_PLOAD_WIDTH] = {0}; 
 void App_Transmit_Data(void)
 {
+    // 进入发送模式
+	Int_SI24R1_TX_Mode();
     // 调用SI24R1接口，发送数据
     // 1. 发送数据 => 唯一性和可靠性
     // 1.1 帧头校验，指定发送给对应的设备，唯一性
@@ -49,4 +51,6 @@ void App_Transmit_Data(void)
     //     mixed_ctrl_data.fixed_position);
 
     Int_SI24R1_TxPacket(comm_tx_buff);
+    // 发送完成，转为接收模式
+	Int_SI24R1_RX_Mode();
 }

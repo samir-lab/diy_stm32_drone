@@ -278,8 +278,8 @@ void Int_SI24R1_Init(void)
 		}
 	}
 
-	// 初始化为发送模式
-	Int_SI24R1_TX_Mode();
+	// 初始化为接收模式
+	Int_SI24R1_RX_Mode();
 	debug_printf("SI24R1 Init OK!\r\n");
 }
 
