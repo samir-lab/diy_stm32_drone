@@ -159,49 +159,6 @@ void OLED_ShowChar(uint8_t x,uint8_t y,uint8_t chr,uint8_t size,uint8_t mode)
 }
 
 /**
- * m^n函数
- */
-uint32_t oled_pow(uint8_t m, uint8_t n)
-{
-	uint32_t result=1;	 
-	while(n--)
-        result *= m;    
-	return result;
-}				  
-
-/**
- * 显示2个数字
- * x,y :起点坐标
- * len :数字的位数
- * size:字体大小
- * mode:模式	0,填充模式;1,叠加模式
- * num:数值(0~4294967295);	
- */
-void OLED_ShowNum(uint8_t x, uint8_t y, uint32_t num, uint8_t len, uint8_t size)
-{         	
-	uint8_t t, temp;
-	uint8_t enshow = 0;						   
-	for(t = 0; t < len; t++)
-	{
-		temp = (num / oled_pow(10, len - t - 1)) % 10;
-		if(enshow == 0 && t < (len - 1))
-		{
-			if(temp == 0)
-			{
-				OLED_ShowChar(x + (size / 2) * t, y, ' ', size, 1); //判断数字前0并显示为空格
-				continue;
-			}
-            else 
-            {
-                enshow = 1;
-            } 
-		 	 
-		}
-	 	OLED_ShowChar(x + (size / 2) * t, y, temp + '0', size, 1); 
-	}
-} 
-
-/**
  * 显示字符串
  * x,y:起点坐标
  * *p:字符串起始地址

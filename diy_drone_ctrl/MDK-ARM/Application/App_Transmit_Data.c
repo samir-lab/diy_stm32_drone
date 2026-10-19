@@ -33,18 +33,20 @@ void App_Transmit_Data(void)
     comm_tx_buffer[11] = remote_ctrl_data.shutdown;
     comm_tx_buffer[12] = remote_ctrl_data.fixed_height;
     comm_tx_buffer[13] = remote_ctrl_data.fixed_position;
-    comm_tx_buffer[14] = remote_ctrl_data.pid_p_pitch;
-    comm_tx_buffer[15] = remote_ctrl_data.pid_p_roll;
+    comm_tx_buffer[14] = (remote_ctrl_data.pid_p_pitch >> 8) & 0xFF;
+    comm_tx_buffer[15] = remote_ctrl_data.pid_p_pitch & 0xFF;
+    comm_tx_buffer[16] = (remote_ctrl_data.pid_p_roll >> 8) & 0xFF;
+    comm_tx_buffer[17] = remote_ctrl_data.pid_p_roll & 0xFF;
     // 校验和
     uint32_t checksum = 0;
-    for(uint8_t i = 0; i < 16; i++)
+    for(uint8_t i = 0; i < 18; i++)
     {
         checksum += comm_tx_buffer[i];
     }
-    comm_tx_buffer[16] = (checksum >> 24) & 0xFF;
-    comm_tx_buffer[17] = (checksum >> 16) & 0xFF;
-    comm_tx_buffer[18] = (checksum >> 8) & 0xFF;
-    comm_tx_buffer[19] = checksum & 0xFF;
+    comm_tx_buffer[18] = (checksum >> 24) & 0xFF;
+    comm_tx_buffer[19] = (checksum >> 16) & 0xFF;
+    comm_tx_buffer[20] = (checksum >> 8) & 0xFF;
+    comm_tx_buffer[21] = checksum & 0xFF;
 
     // debug_printf("TX: %d,%d,%d,%d,%d,%d,%d\n", 
     //     remote_ctrl_data.throttle, 
@@ -99,11 +101,11 @@ void App_Receive_Data(void)
     // 2. 校验和
     uint32_t checksum = 0;
     // 高位在前
-    uint32_t recived_checksum = (comm_rx_buffer[6] << 24) 
-                                | (comm_rx_buffer[7] << 16) 
-                                | (comm_rx_buffer[8] << 8) 
-                                | comm_rx_buffer[9];
-    for(uint8_t i = 0; i < 6; i++)
+    uint32_t recived_checksum = (comm_rx_buffer[9] << 24) 
+                                | (comm_rx_buffer[10] << 16) 
+                                | (comm_rx_buffer[11] << 8) 
+                                | comm_rx_buffer[12];
+    for(uint8_t i = 0; i < 9; i++)
     {
         checksum += comm_rx_buffer[i];
     }
@@ -113,7 +115,7 @@ void App_Receive_Data(void)
     }
 
     // 3. 解析数据到结构体
-    flight_ctrl_data.voltage = comm_rx_buffer[3];
-    flight_ctrl_data.pid_p_pitch = comm_rx_buffer[4];
-    flight_ctrl_data.pid_p_roll = comm_rx_buffer[5];
+    flight_ctrl_data.voltage = (comm_rx_buffer[3] << 8) | comm_rx_buffer[4];
+    flight_ctrl_data.pid_p_pitch = (comm_rx_buffer[5] << 8) | comm_rx_buffer[6];
+    flight_ctrl_data.pid_p_roll = (comm_rx_buffer[7] << 8) | comm_rx_buffer[8];
 }

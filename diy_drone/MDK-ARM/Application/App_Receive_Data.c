@@ -37,11 +37,11 @@ uint8_t App_Receive_Data(void)
     // 2. 校验和
     uint32_t checksum = 0;
     // 高位在前
-    uint32_t recived_checksum = (comm_rx_buffer[16] << 24) 
-                                | (comm_rx_buffer[17] << 16) 
-                                | (comm_rx_buffer[18] << 8) 
-                                | comm_rx_buffer[19];
-    for(uint8_t i = 0; i < 16; i++)
+    uint32_t recived_checksum = (comm_rx_buffer[18] << 24) 
+                                | (comm_rx_buffer[19] << 16) 
+                                | (comm_rx_buffer[20] << 8) 
+                                | comm_rx_buffer[21];
+    for(uint8_t i = 0; i < 18; i++)
     {
         checksum += comm_rx_buffer[i];
     }
@@ -58,8 +58,8 @@ uint8_t App_Receive_Data(void)
     remote_ctrl_data.shutdown = comm_rx_buffer[11];
     remote_ctrl_data.fixed_height = comm_rx_buffer[12];
     remote_ctrl_data.fixed_position = comm_rx_buffer[13];
-    remote_ctrl_data.pid_p_pitch = comm_rx_buffer[14];
-    remote_ctrl_data.pid_p_roll = comm_rx_buffer[15];
+    remote_ctrl_data.pid_p_pitch = (comm_rx_buffer[14] << 8) | comm_rx_buffer[15];
+    remote_ctrl_data.pid_p_roll = (comm_rx_buffer[16] << 8) | comm_rx_buffer[17];
 
     // debug_printf(": %d, %d, %d, %d, %d, %d, %d\n", 
     //     remote_ctrl_data.throttle, 
@@ -86,13 +86,13 @@ void App_Send_Data(void)
     float pid_p_pitch_f = pid_pitch_out.kp;
     float pid_p_roll_f = pid_roll_out.kp;
     // 转换为uint8_t类型
-    uint8_t voltage = (uint8_t)(voltage_f * 100.0f);
-    uint8_t pid_p_pitch = (uint8_t)(pid_p_pitch_f * 100.0f);
-    uint8_t pid_p_roll = (uint8_t)(pid_p_roll_f * 100.0f);
+    uint16_t voltage = (uint16_t)(voltage_f * 100.0f);
+    uint16_t pid_p_pitch = (uint16_t)(pid_p_pitch_f * 100.0f);
+    uint16_t pid_p_roll = (uint16_t)(pid_p_roll_f * 100.0f);
     
+    flight_ctrl_data.voltage = voltage;
     flight_ctrl_data.pid_p_pitch = pid_p_pitch;
     flight_ctrl_data.pid_p_roll = pid_p_roll;
-    flight_ctrl_data.voltage = voltage;
 
     // 清空发送缓冲区
     memset(comm_tx_buffer, 0, SI24R1_TX_PLOAD_WIDTH);
@@ -109,19 +109,22 @@ void App_Send_Data(void)
     comm_tx_buffer[1] = FRAME_HEADER_CHECK_2;
     comm_tx_buffer[2] = FRAME_HEADER_CHECK_3;
     // 数据本身
-    comm_tx_buffer[3] = flight_ctrl_data.voltage;
-    comm_tx_buffer[4] = flight_ctrl_data.pid_p_pitch;
-    comm_tx_buffer[5] = flight_ctrl_data.pid_p_roll;
+    comm_tx_buffer[3] = (flight_ctrl_data.voltage >> 8) & 0xFF;
+    comm_tx_buffer[4] = flight_ctrl_data.voltage & 0xFF;
+    comm_tx_buffer[5] = (flight_ctrl_data.pid_p_pitch >> 8) & 0xFF;    
+    comm_tx_buffer[6] = flight_ctrl_data.pid_p_pitch & 0xFF;
+    comm_tx_buffer[7] = (flight_ctrl_data.pid_p_roll >> 8) & 0xFF;
+    comm_tx_buffer[8] = flight_ctrl_data.pid_p_roll & 0xFF;
     // 校验和
     uint32_t checksum = 0;
-    for(uint8_t i = 0; i < 6; i++)
+    for(uint8_t i = 0; i < 9; i++)
     {
         checksum += comm_tx_buffer[i];
     }
-    comm_tx_buffer[6] = (checksum >> 24) & 0xFF;
-    comm_tx_buffer[7] = (checksum >> 16) & 0xFF;
-    comm_tx_buffer[8] = (checksum >> 8) & 0xFF;
-    comm_tx_buffer[9] = checksum & 0xFF;
+    comm_tx_buffer[9] = (checksum >> 24) & 0xFF;
+    comm_tx_buffer[10] = (checksum >> 16) & 0xFF;
+    comm_tx_buffer[11] = (checksum >> 8) & 0xFF;
+    comm_tx_buffer[12] = checksum & 0xFF;
 
     uint8_t res = 1;
     uint8_t retry_count = 0;
