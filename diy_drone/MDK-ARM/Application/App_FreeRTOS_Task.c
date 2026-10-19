@@ -15,7 +15,7 @@ Flight_State flight_state = FLIGHT_IDLE;
 // 定高目标值
 uint16_t fixed_height_target = 0;
 // 遥控数据结构体
-Mixed_Ctrl_Data_Type mixed_ctrl_data = {
+Remote_Ctrl_Data_Type remote_ctrl_data = {
     .throttle = 0, 
     .yaw = 500, 
     .pitch = 500, 
@@ -43,15 +43,15 @@ TaskHandle_t led_task_handle;
 // 通讯任务
 void comm_task(void *args);
 TaskHandle_t comm_task_handle;
-#define COMM_TASK_PERIOD 6
+#define COMM_TASK_PERIOD 20
 
 void App_FreeRTOS_Start(void)
 {
     // 1. 创建任务
     xTaskCreate(power_task, "power_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_HIGHEST, &power_task_handle);
-    xTaskCreate(flight_ctrl_task, "flight_ctrl_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_HIGH, &flight_ctrl_task_handle);
+    xTaskCreate(comm_task, "comm_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_HIGHEST, &comm_task_handle);
     xTaskCreate(led_task, "led_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_HIGH, &led_task_handle);
-    xTaskCreate(comm_task, "comm_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_MEDIUM, &comm_task_handle);
+    xTaskCreate(flight_ctrl_task, "flight_ctrl_task", DEFAULT_TASK_STACK_SIZE, NULL, TASK_PRIORITY_MEDIUM, &flight_ctrl_task_handle);
 
 
     // 2. 启动调度器
@@ -176,28 +176,26 @@ void led_task(void *args)
 
 void comm_task(void *args)
 {
-    // 获取当前基准时间
-    TickType_t last_wake_time = xTaskGetTickCount();
     // 初始化电压检测
     Int_BAT_ADC_Init();
     while(1){
-        // 每6ms执行一次 => 通讯任务
-        vTaskDelayUntil(&last_wake_time, COMM_TASK_PERIOD);
+        // 每20ms执行一次 => 通讯任务
+        vTaskDelay(COMM_TASK_PERIOD);
         // 1.接收遥控器数据
         uint8_t res = App_Receive_Data();
-        // 2.检查遥控器连接状态
+        // 2.回传飞机数据
+        App_Send_Data();
+        // 3.检查遥控器连接状态
         App_Check_Remote_State(res);
-        // 3.处理关机命令
-        if(mixed_ctrl_data.shutdown == 1)
+        // 4.处理关机命令
+        if(remote_ctrl_data.shutdown == 1)
         {
             // 使用freeRTOS的直接任务通知 => 通知电源任务，执行关机操作
             xTaskNotifyGive(power_task_handle);
             // 关机后不再处理数据，避免重复触发关机动作
             break;
         }
-        // 4.处理飞行状态
+        // 5.处理飞行状态
         App_Check_Flight_State();
-        // 5.回传飞机数据
-        debug_printf("battery: %f\r\n", Int_BAT_ADC_Read());
     }
 }

@@ -12,7 +12,7 @@ Motor_HandleTypeDef right_top_motor = { .htim = &htim2, .channel = TIM_CHANNEL_2
 Motor_HandleTypeDef right_bottom_motor = { .htim = &htim1, .channel = TIM_CHANNEL_3,  .speed = 0};
 
 // 遥控器数据
-extern Mixed_Ctrl_Data_Type mixed_ctrl_data;
+extern Remote_Ctrl_Data_Type remote_ctrl_data;
 // 飞行状态
 extern Flight_State flight_state;
 // 定高目标值
@@ -143,12 +143,12 @@ void App_Flight_Ctrl_Get_Euler_Angle(void)
  */
 
 // 俯仰角 => 外环PID参数
-PID_Type pid_pitch_out = {.kp = 0.12, .ki = 0.0, .kd = 0.3};
+PID_Type pid_pitch_out = {.kp = 0.0, .ki = 0.0, .kd = 2};
 // 俯仰角 => 内环PID参数
 PID_Type pid_pitch_in = {.kp = 0.8, .ki = 0.0, .kd = 15};
 
 // 横滚角 => 外环PID参数
-PID_Type pid_roll_out = {.kp = 0.12, .ki = 0.0, .kd = 0.3};
+PID_Type pid_roll_out = {.kp = 0.0, .ki = 0.0, .kd = 2};
 // 横滚角 => 内环PID参数
 PID_Type pid_roll_in = {.kp = 0.8, .ki = 0.0, .kd = 15};
 
@@ -158,11 +158,16 @@ PID_Type pid_yaw_out = {.kp = 0.0, .ki = 0.0, .kd = 0.0};
 PID_Type pid_yaw_in = {.kp = -0.8, .ki = 0.0, .kd = 15};
 void App_Flight_Ctrl_PID_MPU6050(void)
 {
+    // 俯仰角kp取遥控器值
+    pid_pitch_out.kp = remote_ctrl_data.pid_p_pitch / 100.0;
+    // 横滚角kp取遥控器值
+    pid_roll_out.kp = remote_ctrl_data.pid_p_roll / 100.0;
+
     // PID控制算法实现
     // 1. 俯仰角
     // 1.1 外环，需要目标角度和测量角度
     // 外环的目标值 => 数值转换 => 遥控器数值范围是0-1000，需要转换为[-500,500]，并控制俯仰角范围在[-10,10]之间，单位为度°
-    pid_pitch_out.target = (mixed_ctrl_data.pitch - 500) / 50.0;
+    pid_pitch_out.target = (remote_ctrl_data.pitch - 500) / 50.0;
     // 外环的测量值 => 当前的俯仰角
 	pid_pitch_out.measure = euler_angle.pitch;
 
@@ -175,7 +180,7 @@ void App_Flight_Ctrl_PID_MPU6050(void)
 
     // 2.横滚角
     // 2.1 外环，需要目标角度和测量角度
-	pid_roll_out.target = (mixed_ctrl_data.roll - 500) / 50.0;
+	pid_roll_out.target = (remote_ctrl_data.roll - 500) / 50.0;
 	pid_roll_out.measure = euler_angle.roll;
 
     // 2.2 内环，需要测量角速度
@@ -187,7 +192,7 @@ void App_Flight_Ctrl_PID_MPU6050(void)
 
     // 3.偏航角
     // 3.1 外环，需要目标角度和测量角度
-	pid_yaw_out.target = (mixed_ctrl_data.yaw - 500) / 50.0;
+	pid_yaw_out.target = (remote_ctrl_data.yaw - 500) / 50.0;
 	pid_yaw_out.measure = euler_angle.yaw;
 	
     // 3.2 内环，需要测量角速度
@@ -196,7 +201,7 @@ void App_Flight_Ctrl_PID_MPU6050(void)
 
     // 3.3 计算PID输出值
     Com_PID_Calc_Chain(&pid_yaw_out, &pid_yaw_in);
-    //debug_printf(":%d,%.2f,%d,%.2f\r\n", mixed_ctrl_data.yaw, euler_angle.yaw,gyro_accel_data.gyro.gyro_z,pid_yaw_in.output);
+    //debug_printf(":%d,%.2f,%d,%.2f\r\n", remote_ctrl_data.yaw, euler_angle.yaw,gyro_accel_data.gyro.gyro_z,pid_yaw_in.output);
 }
 
 /**
@@ -280,19 +285,19 @@ static void App_Flight_Locked_Posture(void)
 static void App_Flight_Balanced_Posture(void)
 {
 	// 起飞状态
-    left_top_motor.speed = mixed_ctrl_data.throttle 
+    left_top_motor.speed = remote_ctrl_data.throttle 
                             + pid_pitch_in.output 
                             - pid_roll_in.output
                             - pid_yaw_in.output;
-    left_bottom_motor.speed = mixed_ctrl_data.throttle 
+    left_bottom_motor.speed = remote_ctrl_data.throttle 
                                 - pid_pitch_in.output 
                                 - pid_roll_in.output
                                 + pid_yaw_in.output;
-    right_top_motor.speed = mixed_ctrl_data.throttle 
+    right_top_motor.speed = remote_ctrl_data.throttle 
                                 + pid_pitch_in.output 
                                 + pid_roll_in.output
                                 + pid_yaw_in.output;
-    right_bottom_motor.speed = mixed_ctrl_data.throttle 
+    right_bottom_motor.speed = remote_ctrl_data.throttle 
                                 - pid_pitch_in.output 
                                 + pid_roll_in.output
                                 - pid_yaw_in.output;
@@ -359,7 +364,7 @@ void App_Flight_Ctrl_Motor(void)
 
     // 2.设置电机速度, 现在转速范围
     // 2.1 安全限制 => 当油门小于50时 => 电机上锁，速度置为0
-    if (mixed_ctrl_data.throttle < 50)
+    if (remote_ctrl_data.throttle < 50)
     {
         App_Flight_Locked_Posture();
     }
