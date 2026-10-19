@@ -145,15 +145,22 @@ void App_Send_Data(void)
  * @param conn_result 连接结果，0:接收成功 1:接收失败
  */
 extern Remote_State remote_state;
+uint8_t retry_count = 0;
 void App_Check_Remote_State(uint8_t conn_result)
 {
     if(conn_result == 0)
     {
         remote_state = REMOTE_CONNECTED;
+        retry_count = 0;
     }
     else if(conn_result == 1)
     {
-        remote_state = REMOTE_DISCONNECTED;
+        retry_count++;
+        if(retry_count >= MAX_RETRY_COUNT)
+        {
+            remote_state = REMOTE_DISCONNECTED;
+            retry_count = 0;
+        }
     }
 }
 
