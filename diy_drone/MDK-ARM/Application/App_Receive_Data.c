@@ -156,7 +156,7 @@ void App_Check_Remote_State(uint8_t conn_result)
     else if(conn_result == 1)
     {
         retry_count++;
-        if(retry_count >= MAX_RETRY_COUNT)
+        if(retry_count >= 5)
         {
             remote_state = REMOTE_DISCONNECTED;
             retry_count = 0;
