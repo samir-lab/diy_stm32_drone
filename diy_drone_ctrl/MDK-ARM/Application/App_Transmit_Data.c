@@ -88,6 +88,9 @@ void App_Receive_Data(void)
 
     if(res == 1)
     {
+        flight_ctrl_data.voltage = 0;
+        flight_ctrl_data.pid_p_pitch = 0;
+        flight_ctrl_data.pid_p_roll = 0;
         return; // 接收失败
     }
     // 解析数据

@@ -33,7 +33,7 @@ TaskHandle_t joystick_task_handle;
 // OLED任务
 void oled_task(void *args);
 TaskHandle_t oled_task_handle;
-#define OLED_TASK_PERIOD 200 // 200毫秒，降低刷新频率，减少OLED闪烁
+#define OLED_TASK_PERIOD 100 // 100毫秒
 
 void App_FreeRTOS_Start(void)
 {
