@@ -122,7 +122,7 @@ void Int_PMW3901_Init(void)
     // 读取ProductId验证初始化成功
     uint8_t product_id = Int_PMW3901_Read_Reg(PMW3901_PRODUCT_ID);
   	uint8_t inverse_product_id = Int_PMW3901_Read_Reg(PMW3901_INVERSE_PRODUCT_ID);
-	debug_printf("[PMW3901] Init ProductId: 0x%02X, InverseProductId: 0x%02X\r\n", product_id, inverse_product_id);
+	// debug_printf("[PMW3901] Init ProductId: 0x%02X, InverseProductId: 0x%02X\r\n", product_id, inverse_product_id);
     if (product_id != CHIP_ID || inverse_product_id != CHIP_ID_INVERSE)
     {
         debug_printf("[PMW3901] Init failed! ProductId: 0x%02X, InverseProductId: 0x%02X\r\n", product_id, inverse_product_id);

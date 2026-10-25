@@ -236,9 +236,8 @@ void App_Flight_Ctrl_PID_VL53LX(void)
 /**
  * @brief PID控制，根据PMW3901光流数据计算出PID目标值
  */
-// x轴
-PID_Type pid_fixed_pos_x = {.kp = 0.8, .ki = 0.0, .kd = 15};
-PID_Type pid_fixed_pos_y = {.kp = 0.8, .ki = 0.0, .kd = 15};
+PID_Type pid_fixed_pos_x = {.kp = 0.25, .ki = 0.0, .kd = 12};
+PID_Type pid_fixed_pos_y = {.kp = 0.25, .ki = 0.0, .kd = 12};
 PMW3901_Data_Type position_data = {0};
 void App_Flight_Ctrl_PID_PMW3901(void)
 {

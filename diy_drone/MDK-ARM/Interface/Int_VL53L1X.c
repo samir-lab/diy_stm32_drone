@@ -25,11 +25,11 @@ void Int_VL53L1X_Init(void)
     uint16_t wordData;
     /* Those basic I2C read functions can be used to check your own I2C functions */
     VL53L1_RdByte(dev, 0x010F, &byteData);
-    debug_printf("VL53L1X Model_ID: %X\n", byteData);
+    // debug_printf("VL53L1X Model_ID: %X\n", byteData);
     VL53L1_RdByte(dev, 0x0110, &byteData);
-    debug_printf("VL53L1X Module_Type: %X\n", byteData);
+    // debug_printf("VL53L1X Module_Type: %X\n", byteData);
     VL53L1_RdWord(dev, 0x010F, &wordData);
-    debug_printf("VL53L1X: %X\n", wordData);
+    // debug_printf("VL53L1X: %X\n", wordData);
 
     if(wordData == 0){
         debug_printf("VL53L1X Read Data Error\n");
@@ -42,7 +42,7 @@ void Int_VL53L1X_Init(void)
         VL53L1X_BootState(dev, &sensorState);
         vTaskDelay(2);
     }
-    debug_printf("VL53L1X Chip booted\n");
+    // debug_printf("VL53L1X Chip booted\n");
 
     // 4.配置传感器
     /* This function must to be called to initialize the sensor with the default setting  */
