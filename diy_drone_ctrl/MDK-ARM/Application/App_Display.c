@@ -1,5 +1,6 @@
 #include "App_Display.h"
 #include <stdio.h>
+#include <string.h>
 
 static void App_Display_Draw_Rect(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t dot)
 {
@@ -53,6 +54,33 @@ static void App_Display_Draw_Progress_Bar(uint8_t x, uint8_t y, uint8_t width, u
     }
 }
 
+static void App_Display_Show_Startup_Screen(void)
+{
+    static const uint8_t *startup_lines[] =
+    {
+        (const uint8_t *)"  __      _ ",
+        (const uint8_t *)"o'')}____//",
+        (const uint8_t *)" `_/      )",
+        (const uint8_t *)" (_(_/-(_/"
+    };
+    uint8_t i;
+    uint8_t start_x;
+    uint8_t start_y;
+    uint8_t line_len;
+
+    App_Display_Draw_Rect(0, 0, 127, 63, 0);
+
+    start_y = (uint8_t)((64U - 4U * 12U) / 2U);
+    for (i = 0; i < 4; i++)
+    {
+        line_len = (uint8_t)strlen((const char *)startup_lines[i]);
+        start_x = (uint8_t)((128U - line_len * 8U) / 2U);
+        OLED_ShowString(start_x, start_y + i * 12U, startup_lines[i], 12, 1);
+    }
+    OLED_Refresh_Gram();
+    vTaskDelay(5000);
+}
+
 /**
  * 初始化OLED显示屏
  */
@@ -60,6 +88,7 @@ void App_Dispaly_Init(void)
 {
     OLED_Init();
     OLED_Clear();
+    App_Display_Show_Startup_Screen();
 }
 
 /**
