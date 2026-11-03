@@ -78,7 +78,7 @@ static void App_Display_Show_Startup_Screen(void)
         OLED_ShowString(start_x, start_y + i * 12U, startup_lines[i], 12, 1);
     }
     OLED_Refresh_Gram();
-    vTaskDelay(5000);
+    vTaskDelay(3000);
 }
 
 /**
