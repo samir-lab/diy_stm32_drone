@@ -262,8 +262,9 @@ void Int_SI24R1_ResetAllReg(void)
 
 void Int_SI24R1_Init(void)
 {
-	// 等待SI24R1上电稳定
+	// SI24R1上电
 	HAL_GPIO_WritePin(SI_POWER_GPIO_Port, SI_POWER_Pin, GPIO_PIN_RESET);
+	// 等待上电稳定
 	HAL_Delay(200);
 	Int_SI24R1_ResetAllReg();
 	// 芯片检测
