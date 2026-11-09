@@ -4,7 +4,8 @@
 <img src="./Res/飞控板.jfif" width="450" height="auto" />
 <img src="./Res/遥控器.jfif" width="450" height="auto" />
 
-[<video src="./Res/演示.mp4" width="640" controls></video>](https://github.com/samir-lab/diy_stm32_drone/blob/main/Res/%E6%BC%94%E7%A4%BA.mp4)
+# 成品演示
+<video src="https://www.bilibili.com/video/BV1EjWN6gEyi" width="640" controls></video>
 
 
 # 文件说明
