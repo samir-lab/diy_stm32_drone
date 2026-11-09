@@ -5,16 +5,7 @@
 <img src="./Res/遥控器.jfif" width="450" height="auto" />
 
 # 成品演示
-<iframe src="[//player.bilibili.com/player.html?bvid=BV1EjWN6gEyi&page=1](https://www.bilibili.com/video/BV1EjWN6gEyi?t=5.7)" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
-
-<div>
-  <video controls src="./Res/演示.mp4" muted="false"></video>
-</div>
-<div>
-  <video controls src="https://www.bilibili.com/video/BV1EjWN6gEyi?t=5.7" muted="false"></video>
-</div>
-[![视频封面图]("./Res/遥控器.jfif")](https://www.bilibili.com/video/BV1EjWN6gEyi)
-[![视频封面图](./Res/遥控器.jfif)](https://www.bilibili.com/video/BV1EjWN6gEyi)
+https://www.bilibili.com/video/BV1EjWN6gEyi
 
 # 文件说明
 此工程是跟着尚硅谷无人机教程制作的
@@ -61,4 +52,6 @@ PS：阻容可在立创商城购买，其他元件在淘宝购买即可。
 - SI24R1通信不是特别稳，待查；
 - PMW3901只能捕获30cm内的像素偏移，待查；
 
+
 有兴趣的小伙伴欢迎一起参与，一起学习，一起进步！
+<img src="./Res/VX群.jfif" width="450" height="auto" />
