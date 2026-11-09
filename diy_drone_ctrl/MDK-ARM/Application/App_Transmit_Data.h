@@ -27,7 +27,7 @@ typedef struct {
 #define FRAME_HEADER_CHECK_2 'K'
 #define FRAME_HEADER_CHECK_3 'Q'
 
-#define MAX_RETRY_COUNT 100
+#define MAX_RETRY_COUNT 10
 
 /**
  * @brief 自动切换SI24R1模式，发送数据

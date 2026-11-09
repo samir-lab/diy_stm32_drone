@@ -143,25 +143,25 @@ void App_Flight_Ctrl_Get_Euler_Angle(void)
  */
 
 // 俯仰角 => 外环PID参数
-PID_Type pid_pitch_out = {.kp = 0.0, .ki = 0.0, .kd = 2};
+PID_Type pid_pitch_out = {.kp = 0.0, .ki = 0.0, .kd = 15};
 // 俯仰角 => 内环PID参数
 PID_Type pid_pitch_in = {.kp = 0.8, .ki = 0.0, .kd = 15};
 
 // 横滚角 => 外环PID参数
-PID_Type pid_roll_out = {.kp = 0.0, .ki = 0.0, .kd = 2};
+PID_Type pid_roll_out = {.kp = 0.0, .ki = 0.0, .kd = 15};
 // 横滚角 => 内环PID参数
 PID_Type pid_roll_in = {.kp = 0.8, .ki = 0.0, .kd = 15};
 
 // 偏航角 => 外环PID参数
 PID_Type pid_yaw_out = {.kp = 0.0, .ki = 0.0, .kd = 0.0};
 // 偏航角 => 内环PID参数
-PID_Type pid_yaw_in = {.kp = -0.8, .ki = 0.0, .kd = 15};
+PID_Type pid_yaw_in = {.kp = -1.2, .ki = 0.0, .kd = 15};
 void App_Flight_Ctrl_PID_MPU6050(void)
 {
     // 俯仰角kp取遥控器值
-    pid_pitch_out.kp = remote_ctrl_data.pid_p_pitch / 100.0;
+    pid_pitch_out.kp = -1 * (remote_ctrl_data.pid_p_pitch / 100.0);
     // 横滚角kp取遥控器值
-    pid_roll_out.kp = remote_ctrl_data.pid_p_roll / 100.0;
+    pid_roll_out.kp = -1 * (remote_ctrl_data.pid_p_roll / 100.0);
 
     // PID控制算法实现
     // 1. 俯仰角
@@ -207,7 +207,7 @@ void App_Flight_Ctrl_PID_MPU6050(void)
 /**
  * @brief PID控制，根据VL53LX激光测距计算出PID目标值
  */
-PID_Type pid_fixed_height = {.kp = -0.4, .ki = 0.0, .kd = 15};
+PID_Type pid_fixed_height = {.kp = -0.6, .ki = 0.0, .kd = 30};
 void App_Flight_Ctrl_PID_VL53LX(void)
 {
 	if(flight_state != FLIGHT_FIX_HEIGHT && flight_state != FLIGHT_FIX_POSITION)
@@ -236,8 +236,8 @@ void App_Flight_Ctrl_PID_VL53LX(void)
 /**
  * @brief PID控制，根据PMW3901光流数据计算出PID目标值
  */
-PID_Type pid_fixed_pos_x = {.kp = 0.25, .ki = 0.0, .kd = 12};
-PID_Type pid_fixed_pos_y = {.kp = 0.25, .ki = 0.0, .kd = 12};
+PID_Type pid_fixed_pos_x = {.kp = 0.35, .ki = 0.0, .kd = 24};
+PID_Type pid_fixed_pos_y = {.kp = 0.35, .ki = 0.0, .kd = 24};
 PMW3901_Data_Type position_data = {0};
 void App_Flight_Ctrl_PID_PMW3901(void)
 {
