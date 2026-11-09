@@ -1,7 +1,17 @@
 #include "App_Transmit_Data.h"
 
 // 待发送遥控数据
-Remote_Ctrl_Data_Type remote_ctrl_data;
+Remote_Ctrl_Data_Type remote_ctrl_data = {
+    .throttle = 0,
+    .yaw = 0,
+    .pitch = 0,
+    .roll = 0,
+    .shutdown = 0,
+    .fixed_height = 0,
+    .fixed_position = 0,
+    .pid_p_pitch = 250,
+    .pid_p_roll = 250,
+};
 // 接收到飞控数据
 Flight_Ctrl_Data_Type flight_ctrl_data;
 
