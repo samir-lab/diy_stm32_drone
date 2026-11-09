@@ -5,7 +5,8 @@
 <img src="./Res/遥控器.jfif" width="450" height="auto" />
 
 # 成品演示
-![演示视频](https://www.bilibili.com/video/BV1EjWN6gEyi)
+<iframe src="//player.bilibili.com/player.html?bvid=BV1EjWN6gEyi&page=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
+
 
 
 # 文件说明
