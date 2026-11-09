@@ -29,6 +29,7 @@ https://www.bilibili.com/video/BV1EjWN6gEyi
 - 电机：8520空心杯电机；
 - 电源管理：IP5305T；
 - 电池：25C 1300mAh 3.7V XH2.54接口（遥控器容量可以小点）
+
 PS：阻容类可在立创商城购买，其他元件在淘宝购买即可。
 
 
