@@ -119,8 +119,6 @@ uint8_t Int_SI24R1_TxPacket(uint8_t *txbuf);
 
 // SI24R1 初始化
 void Int_SI24R1_Init(void); 
-
-void Int_SI24R1_ResetAllReg(void);
 //********************************************************************************************************************//
 #endif
 

@@ -81,8 +81,8 @@ void Int_SI24R1_RX_Mode(void)
 	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RF_CH, 0x6e);
 	// 接收通道0选择和发送通道相同的有效数据宽度
 	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RX_PW_P0, SI24R1_TX_PLOAD_WIDTH);
-	// 数据传输速率选择为1Mbps，发射功率为4dBm
-	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RF_SETUP, 0x06);
+	// 数据传输速率选择为250kbps，发射功率为7dBm
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RF_SETUP, 0x27);
 	// CRC使能，CRC模式为16位，开机，接收模式
 	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_CONFIG, 0x0f);
 	// 清除所有中断标志位
@@ -103,12 +103,12 @@ void Int_SI24R1_TX_Mode(void)
 	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_EN_AA, 0x01);
 	// 使能接收通道0
 	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_EN_RXADDR, 0x01);
-	// 选择自动重发延时为250us，最大自动重发次数为10次
-	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_SETUP_RETR, 0x0a);
+	// 选择自动重发延时为750us，重传3次
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_SETUP_RETR, 0x23);
 	// 选择射频信道110（0-125个信道）
 	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RF_CH, 0x6e);
-	// 数据传输速率选择为1Mbps，发射功率为4dBm
-	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RF_SETUP, 0x06);
+	// 数据传输速率选择为250kbps，发射功率为7dBm
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RF_SETUP, 0x27);
 	// CRC使能，CRC模式为16位，开机，发送模式
 	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_CONFIG, 0x0e);
 	// 拉高CE使能，进入接收模式
@@ -224,12 +224,12 @@ void Int_SI24R1_ResetAllReg(void)
 	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_EN_RXADDR, 0x03);
 	// SETUP_AW 0x03 默认 0x03：5字节地址宽度
 	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_SETUP_AW, 0x03);
-	// SETUP_RETR 0x04 默认 0x03：自动重传间隔750us，重传3次
-	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_SETUP_RETR, 0x03);
+	// SETUP_RETR 0x04 默认 0x23：自动重传间隔750us，重传3次
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_SETUP_RETR, 0x23);
 	// RF_CH 0x05 默认 0x02：信道2
 	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RF_CH, 0x02);
-	// RF_SETUP 0x06 默认 0x07：1Mbps，0dBm发射功率
-	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RF_SETUP, 0x07);
+	// RF_SETUP 0x06 默认 0x07：250kbps，7dBm
+	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_RF_SETUP, 0x27);
 	// STATUS 0x07：写1清除所有中断标志
 	Int_SI24R1_Write_Reg(SI24R1_WRITE_REG + SI24R1_STATUS, 0x70);
 	// OBSERVE_TX 0x08 只读，无需写
