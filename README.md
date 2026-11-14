@@ -1,8 +1,8 @@
 # diy_drone
 基于STM32F103C8T6的DIY无人机
 
-<img src="./Res/飞控板.jfif" width="450" height="auto" />
-<img src="./Res/遥控器.jfif" width="450" height="auto" />
+<img src="./assets/飞控板.jfif" width="450" height="auto" />
+<img src="./assets/遥控器.jfif" width="450" height="auto" />
 
 # 成品演示
 https://www.bilibili.com/video/BV1EjWN6gEyi
